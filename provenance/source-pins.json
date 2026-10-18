@@ -1,0 +1,247 @@
+[
+  {
+    "record": "corech-source",
+    "urls": [
+      "https://ae.iti.kit.edu/1640.php",
+      "https://arxiv.org/pdf/1906.04832v3"
+    ],
+    "files": [
+      {
+        "path": "ultra-1906.04832v3.pdf",
+        "url": "https://arxiv.org/pdf/1906.04832v3",
+        "bytes": 642508,
+        "sha256": "c1b8372846786ee8dd21a416b48a11bd39e3227fedb1da9d0e639bffd5ab8460"
+      },
+      {
+        "path": "contraction-hierarchies-diploma2008.pdf",
+        "url": "https://ae.iti.kit.edu/1640.php",
+        "bytes": 1657926,
+        "sha256": "d34ca71363c6947c9663bd4ff38de11906f6b3a51ae51881adf3e6cd0a647544"
+      }
+    ]
+  },
+  {
+    "record": "early-pruning-capabilities",
+    "urls": [],
+    "files": []
+  },
+  {
+    "record": "flash-tb-reference-commit",
+    "urls": [
+      "https://github.com/TransitRouting/FLASH-TB"
+    ],
+    "files": []
+  },
+  {
+    "record": "flash-tb-source",
+    "urls": [
+      "https://arxiv.org/html/2312.13146v3",
+      "https://github.com/TransitRouting/FLASH-TB"
+    ],
+    "files": []
+  },
+  {
+    "record": "scalable-tp-source",
+    "urls": [
+      "https://ad-publications.cs.uni-freiburg.de/ALENEX_scalable_tp_BHS_2016.pdf",
+      "https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ESA.2026.9",
+      "https://github.com/PatrickSteil/TREX"
+    ],
+    "files": [
+      {
+        "url": "https://ad-publications.cs.uni-freiburg.de/ALENEX_scalable_tp_BHS_2016.pdf",
+        "path": "scalable-transfer-patterns-2016.pdf",
+        "sha256": "0434e86bb7616b93d0b7273f1f9cd6af6751916caeb5d6b61e34b33ecc3b6326"
+      }
+    ]
+  },
+  {
+    "record": "scalable-tp-v2-source",
+    "urls": [
+      "https://ad-publications.cs.uni-freiburg.de/ALENEX_scalable_tp_BHS_2016.pdf"
+    ],
+    "files": []
+  },
+  {
+    "record": "scalable-tp-v3-source",
+    "urls": [
+      "https://ad-publications.cs.uni-freiburg.de/ALENEX_scalable_tp_BHS_2016.pdf"
+    ],
+    "files": []
+  },
+  {
+    "record": "scalable-tp-v4-source",
+    "urls": [
+      "https://ad-publications.cs.uni-freiburg.de/ALENEX_scalable_tp_BHS_2016.pdf"
+    ],
+    "files": []
+  },
+  {
+    "record": "tad-source",
+    "urls": [
+      "https://arxiv.org/pdf/2603.11729v1",
+      "https://github.com/andrii-rohovyi/PublicTransitRoutingWithUnlimitedTransfer",
+      "https://raw.githubusercontent.com/andrii-rohovyi/PublicTransitRoutingWithUnlimitedTransfer/2328e33f84e13168add27bc4cb8d80f4caaea7ce/Algorithms/Dijkstra/TransferAwareDijkstra.h",
+      "https://raw.githubusercontent.com/andrii-rohovyi/PublicTransitRoutingWithUnlimitedTransfer/2328e33f84e13168add27bc4cb8d80f4caaea7ce/DataStructures/Graph/TimeDependentGraph.h",
+      "https://raw.githubusercontent.com/andrii-rohovyi/PublicTransitRoutingWithUnlimitedTransfer/2328e33f84e13168add27bc4cb8d80f4caaea7ce/LICENSE"
+    ],
+    "files": [
+      {
+        "path": "tad-2603.11729v1.pdf",
+        "url": "https://arxiv.org/pdf/2603.11729v1",
+        "bytes": 283006,
+        "sha256": "1b901bf69af024e601fd5f05089993fc64202eb17bb3fd1d1e966e027cccb945"
+      },
+      {
+        "path": "tad-TransferAwareDijkstra.h.txt",
+        "url": "https://raw.githubusercontent.com/andrii-rohovyi/PublicTransitRoutingWithUnlimitedTransfer/2328e33f84e13168add27bc4cb8d80f4caaea7ce/Algorithms/Dijkstra/TransferAwareDijkstra.h",
+        "bytes": 13736,
+        "sha256": "d77d09e6552b7653297f0e947a1fe4b913612503761d9248490511dbc48c6a6b"
+      },
+      {
+        "path": "tad-TimeDependentGraph.h.txt",
+        "url": "https://raw.githubusercontent.com/andrii-rohovyi/PublicTransitRoutingWithUnlimitedTransfer/2328e33f84e13168add27bc4cb8d80f4caaea7ce/DataStructures/Graph/TimeDependentGraph.h",
+        "bytes": 26914,
+        "sha256": "ca90a835ae35387ab902d4e96ce022b05ecb8789c00d7ea65bf1cecc9c655eb4"
+      },
+      {
+        "path": "tad-reference-LICENSE.txt",
+        "url": "https://raw.githubusercontent.com/andrii-rohovyi/PublicTransitRoutingWithUnlimitedTransfer/2328e33f84e13168add27bc4cb8d80f4caaea7ce/LICENSE",
+        "bytes": 1088,
+        "sha256": "d5baa7300225514cda71dc7d69c842572112380be743e30d467ec03a37d1837d"
+      }
+    ]
+  },
+  {
+    "record": "transfer-patterns-source",
+    "urls": [
+      "https://ad-publications.cs.uni-freiburg.de/ALENEX_scalable_tp_BHS_2016.pdf",
+      "https://ad-publications.informatik.uni-freiburg.de/ESA_transferpatterns_BCEGHRV_2010.pdf",
+      "https://github.com/TransitRouting/FLASH-TB"
+    ],
+    "files": [
+      {
+        "url": "https://ad-publications.informatik.uni-freiburg.de/ESA_transferpatterns_BCEGHRV_2010.pdf",
+        "path": "transfer-patterns-2010.pdf",
+        "sha256": "2f8775522f38b4baf7bfae589fb03ac3a8138f88fc392e72bfdc911d57e4f943"
+      },
+      {
+        "url": "https://ad-publications.cs.uni-freiburg.de/ALENEX_scalable_tp_BHS_2016.pdf",
+        "path": "scalable-transfer-patterns-2016.pdf",
+        "sha256": "0434e86bb7616b93d0b7273f1f9cd6af6751916caeb5d6b61e34b33ecc3b6326"
+      }
+    ]
+  },
+  {
+    "record": "trex-reference-commit",
+    "urls": [
+      "https://github.com/PatrickSteil/TREX"
+    ],
+    "files": []
+  },
+  {
+    "record": "trex-source",
+    "urls": [
+      "https://arxiv.org/abs/2605.18778v1",
+      "https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ESA.2026.9",
+      "https://github.com/PatrickSteil/TREX"
+    ],
+    "files": [
+      {
+        "path": "trex-esa2026.pdf",
+        "sha256": "42b67cfb398b38d6f0e2f2336f31891057b507d210594501bacd4b6f8484b36d",
+        "bytes": 1038923
+      },
+      {
+        "path": "trex-esa2026.pdf.txt",
+        "sha256": "6f68cabf4033438aaa41f85830ee6318080b4728b8f76f9d3bf18bc250f835a6",
+        "bytes": 85999
+      },
+      {
+        "path": "trex-2605.18778.pdf",
+        "sha256": "dc333b05aac6a0cfb2f9c15130de76cfd0d4c2ddbe19f18efa0d7a03a987a959",
+        "bytes": 8473047
+      },
+      {
+        "path": "trex-2605.18778.pdf.txt",
+        "sha256": "4f390bb0fdce0c0f504dd7d267f3dcfe958e6d796056facd9028656d744f46c6",
+        "bytes": 121159
+      },
+      {
+        "path": "trex-reference-f2470965a83e8411fe714d22773842fc1ecb9dad.tar.gz",
+        "sha256": "64679b65319e2a34c6165a9a77b9791671cd5674c86ade23117a74821f103c3b",
+        "bytes": 430111
+      },
+      {
+        "path": "trex-reference-LICENSE.txt",
+        "sha256": "078388c378316a6c2a9407399b06a01be7cabe282be532b3d0fdae5d0f10fbea",
+        "bytes": 1126
+      }
+    ]
+  },
+  {
+    "record": "trip-based-source",
+    "urls": [
+      "https://arxiv.org/licenses/nonexclusive-distrib/1.0/license.html",
+      "https://arxiv.org/pdf/1504.07149v2"
+    ],
+    "files": [
+      {
+        "sha256": "65877bcb03ec35a8776ecfc7bc98b22f924ca908f2e230c52bce7fb49e97c9a4"
+      }
+    ]
+  },
+  {
+    "record": "ultra-grouped-source",
+    "urls": [
+      "https://arxiv.org/html/1906.04832v3"
+    ],
+    "files": []
+  },
+  {
+    "record": "ultra-reuse-source",
+    "urls": [
+      "https://arxiv.org/html/1906.04832v3"
+    ],
+    "files": []
+  },
+  {
+    "record": "ultra-source",
+    "urls": [
+      "https://arxiv.org/html/1906.04832v3",
+      "https://github.com/kit-algo/ULTRA"
+    ],
+    "files": [
+      {
+        "path": "ultra-1906.04832v3.pdf",
+        "bytes": 642508,
+        "sha256": "c1b8372846786ee8dd21a416b48a11bd39e3227fedb1da9d0e639bffd5ab8460"
+      },
+      {
+        "path": "ultra-reference-f691273809bf04e34a6880b1069ec9c940675a1a.tar.gz",
+        "bytes": 295496,
+        "sha256": "f7a79794beb14b1c3869e5305d870a40663f00e1624888430af2b8585429a730"
+      },
+      {
+        "path": "ultra-reference-LICENSE.txt",
+        "bytes": 1088,
+        "sha256": "d5baa7300225514cda71dc7d69c842572112380be743e30d467ec03a37d1837d"
+      },
+      {
+        "path": "ShortcutSearch.h",
+        "bytes": 32508,
+        "sha256": "1d0ddccb096ec194d8c49200f07659c6c139642f3923ee178995e8210e756d58"
+      },
+      {
+        "path": "Builder.h",
+        "bytes": 3691,
+        "sha256": "f2ba83ff271497b52f906ca648cde720946f06af569fdf0c6183a9732c466e16"
+      },
+      {
+        "path": "ULTRARAPTOR.h",
+        "bytes": 21709,
+        "sha256": "99f1e95f13c63ea76b05fad6fd6ea48ffa1c425911f92b5623e37f8aa78414c6"
+      }
+    ]
+  }
+]
