@@ -410,11 +410,12 @@
       "path": "tripbased/patterns_query.go",
       "source_sha256": "9e22d02da6941bfd17a394540b24fe140f684d8d46acf448ef10dd0f5d8d781d",
       "baseline_sha256": "77859585f5ac9c987e4fe45c9a2e951a75a0c612d5b323b4db7249dadf1ef55e",
-      "output_sha256": "c723c65ccee3bc16388daa27e3dbc4a0ff48ac5a9c9fbc7afc7bfd03768985a4",
+      "output_sha256": "d4ba7ce078b9b0583d80d83a83398b2d028f1f881d77627a88a462c6689958d6",
       "reason": "TP v8 accepted source; common foundations and successful public implementations",
       "transforms": [
         "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
+        "gofmt after public namespace rewrite",
+        "release composition repair: skip empty class-filtered Scalable TP line before reading pickup/dropoff prototype; existing cross-repository literal regression protects behavior"
       ],
       "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/patterns_query.go"
     },

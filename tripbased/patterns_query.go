@@ -117,6 +117,12 @@ func (x *PatternIndex) directIncidence(from, to int, ready int64, s *PatternQuer
 				if u.pos >= v.pos {
 					continue
 				}
+				// Scalable TP retains shared line IDs/incidence when a local or
+				// long-distance class filters every trip out of a line. There is
+				// no prototype or usable departure for that empty class view.
+				if len(line.trips) == 0 {
+					continue
+				}
 				prototype := x.base.cp.trips[line.trips[0]].cs
 				if !prototype[u.pos].Pickup || !prototype[v.pos-1].Dropoff {
 					continue
