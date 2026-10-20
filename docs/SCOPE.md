@@ -1,13 +1,20 @@
-# Implementation scope
+# Research checkpoint scope
 
-Algorithm names describe implementations and adaptations, not universal feature support or verified equivalence to a reference executable.
+Algorithm names describe scoped adaptations. This checkpoint does not complete the algorithm register or establish maximum efficiency. Earliest arrival, representative Pareto frontiers, strict ordered identity top-k and bounded presentation remain separate contracts. Read the [finite contract](CONTRACT.md), [static extensions](CONTRACT_0.2.md) and [checkpoint changes](RESEARCH_CHECKPOINT.md).
 
-- CSA research controls distinguish strict bounded identity-k, cap-stratified results and explicitly incomplete heuristic label caps. Candidate k and display k are separate. Shared scanning over independent requests is not a production candidate-station-selection pipeline.
-- RAPTOR and McRAPTOR return representatives of their declared nondominated objective vectors, rather than every equal-vector identity. Optional Early Pruning is default-off and supports 2D arrival/boardings and 3D arrival/boardings/walking. It prunes duration-ordered walking closure candidates; it does not prune the street-graph Dijkstra itself or establish strict identity top-k.
-- The paper profile requires positive event durations, static stop-pair transfer rules, explicit walking role limits, a nonbinding total-walking resource and a certified sufficient leg budget. Trip/route-specific transfer state needs a different supported implementation.
-- Ordinary Trip-Based and accelerated variants retain narrower assumptions. Restricted pickups/dropoffs, arbitrary transfer rules and finite walking caps can invalidate their preparation contract. Keep rejection reasons instead of weakening input semantics.
-- `BuildBoundedWalkingTB` is a separate destination-conditioned, unranked 2D construction. Its cache key includes the dataset, destination, walking ceiling and preparation configuration. It rejects restrictions outside its profile. It is not ranked T-REX, a 3D walking frontier or a multi-destination shared search.
-- T-REX, FLASH, transfer patterns and scalable transfer patterns are bounded static adaptations. Their optional reductions, partitioning and update behavior do not automatically match native reference engines. Core-CH is a transfer accelerator, not a complete timetable router. ULTRA's preprocessing and query scope must be evaluated independently.
-- Walking accessibility conservatively requires explicit permission; unknown is excluded when requested. Stop/vehicle accessibility is not a verified step-free travel guarantee. Fares, disruptions, crowding, paid areas and physical station navigation need additional data and contracts.
+| Method | Supported scope | Limits |
+|---|---|---|
+| Dense RAPTOR / McRAPTOR | Dense round queues and optional Early Pruning; 2D/3D representatives | Equal vectors need not preserve every identity; sparse allocation regression disclosed |
+| Ordinary capped Trip-Based | Shared index; SearchCappedWalking; independent walking roles, pickup/dropoff and static stop-pair rules | Unranked 2D arrival/boarding only; total walking and leg resources require certificates |
+| Capped ULTRA control | Transfer-complete index and raw walking witnesses | No canonical shortcut-sparsity claim |
+| ULTRA safe subset | Specific omissions with sufficient stay-aboard witnesses | Narrow omission rule; general binding-resource ULTRA unqualified |
+| FLASH | Static stop-pair rules, suffix flags and query role caps | Preprocessing/memory matter; retained-profile options are separate experiments |
+| Destination fixed-cap TP | Destination/walking-class-bound patterns and source/profile accounting | Partial indexes unusable; all-source preparation, finalization, memory and query latency unqualified |
+| Static-cap T-REX experiment | Unrestricted ranked candidates, original-query all-representative replay and mandatory bounded independent verification | Invalid winners can hide feasible capped objectives; declined/incomplete output is cleared |
+| Existing local CSA controls | Previously published exact/heuristic modes | Public CSA source unchanged; no new optimization or production equivalence claim |
 
-These variants are not all independent algorithm families. Tiny exhaustive tests, independent witness checks, differential tests, mutations, fuzzing and race checks provide bounded evidence. No suite proves bug freedom, and cross-implementation agreement alone is not a full-network oracle.
+The checkpoint note documents T-REX raw candidate coverage failures and TP incomplete full-model preparation. Higher verification budgets cannot recover omitted ranked candidates. A nine-hour TP planning estimate does not establish full-index memory/finalization feasibility.
+
+The importer supports a narrower static profile than general GTFS. Fares, live disruptions, crowding, paid areas, physical station navigation and verified step-free access remain outside scope. Unknown accessibility is conservatively excluded when requested, without establishing real-world accessibility. Modeled frequency events are not exact published departures. OSM is topology, not a timetable.
+
+Tiny exhaustive oracles, full-witness replay, metamorphic checks, differential comparisons, fuzzing and race tests provide bounded evidence. No suite guarantees bug freedom; cross-implementation agreement is not a full-network oracle.

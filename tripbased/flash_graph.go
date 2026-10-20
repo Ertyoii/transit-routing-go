@@ -105,6 +105,43 @@ func (x *FlashIndex) closeWalks(d model.Dataset, w *flashWork) error {
 	return nil
 }
 
+// flashAffinityHeap contains only unassigned vertices with positive affinity
+// to the current cell. positions permits O(log V) updates without stale entries.
+// Sorted stop indices provide exactly the original stop-ID tie break.
+type flashAffinityHeap struct {
+	vertices                    []int
+	positions, affinity, degree []int
+}
+
+func (h flashAffinityHeap) Len() int { return len(h.vertices) }
+func (h flashAffinityHeap) Less(i, j int) bool {
+	a, b := h.vertices[i], h.vertices[j]
+	if h.affinity[a] != h.affinity[b] {
+		return h.affinity[a] > h.affinity[b]
+	}
+	if h.degree[a] != h.degree[b] {
+		return h.degree[a] > h.degree[b]
+	}
+	return a < b
+}
+func (h flashAffinityHeap) Swap(i, j int) {
+	h.vertices[i], h.vertices[j] = h.vertices[j], h.vertices[i]
+	h.positions[h.vertices[i]] = i
+	h.positions[h.vertices[j]] = j
+}
+func (h *flashAffinityHeap) Push(value any) {
+	v := value.(int)
+	h.positions[v] = len(h.vertices)
+	h.vertices = append(h.vertices, v)
+}
+func (h *flashAffinityHeap) Pop() any {
+	i := len(h.vertices) - 1
+	v := h.vertices[i]
+	h.vertices = h.vertices[:i]
+	h.positions[v] = -1
+	return v
+}
+
 // A deterministic balanced weighted graph-growth partitioner. This is an exact
 // partition, not a shortest-path approximation; partition quality affects speed.
 func (x *FlashIndex) partition(w *flashWork) error {
@@ -139,29 +176,63 @@ func (x *FlashIndex) partition(w *flashWork) error {
 	p.LayoutEdges /= 2
 	p.TotalWeight /= 2
 	assigned := make([]bool, n)
+	// A fixed degree/ID order supplies the best zero-affinity seed whenever
+	// the current cell has no frontier. Assigned entries are skipped once.
+	seeds := make([]int, n)
+	for v := range seeds {
+		seeds[v] = v
+	}
+	sort.Slice(seeds, func(i, j int) bool {
+		a, b := seeds[i], seeds[j]
+		if degree[a] != degree[b] {
+			return degree[a] > degree[b]
+		}
+		return a < b
+	})
+	seed := 0
+	affinity, epoch, positions := make([]int, n), make([]int, n), make([]int, n)
+	frontier := &flashAffinityHeap{positions: positions, affinity: affinity, degree: degree}
 	remaining := n
 	for cell := 0; cell < x.cfg.Cells; cell++ {
 		capacity := (remaining + x.cfg.Cells - cell - 1) / (x.cfg.Cells - cell)
-		affinity := make([]int, n)
+		// Reset only the frontier. Epochs avoid a V-element reset per cell.
+		frontier.vertices = frontier.vertices[:0]
 		for j := 0; j < capacity; j++ {
+			if e := w.tick(); e != nil {
+				return e
+			}
 			best := -1
-			for v := 0; v < n; v++ {
-				if e := w.tick(); e != nil {
-					return e
+			if frontier.Len() > 0 {
+				best = heap.Pop(frontier).(int)
+			} else {
+				for assigned[seeds[seed]] {
+					if e := w.tick(); e != nil {
+						return e
+					}
+					seed++
 				}
-				if assigned[v] {
-					continue
-				}
-				if best < 0 || affinity[v] > affinity[best] || affinity[v] == affinity[best] && degree[v] > degree[best] {
-					best = v
-				}
+				best = seeds[seed]
+				seed++
 			}
 			assigned[best] = true
 			remaining--
 			p.Cells[x.names[best]] = cell
 			p.Sizes[cell]++
 			for v, weight := range adj[best] {
-				affinity[v] += weight
+				if e := w.tick(); e != nil {
+					return e
+				}
+				if assigned[v] {
+					continue
+				}
+				if epoch[v] != cell+1 {
+					epoch[v] = cell + 1
+					affinity[v] = weight
+					heap.Push(frontier, v)
+				} else {
+					affinity[v] += weight
+					heap.Fix(frontier, positions[v])
+				}
 			}
 		}
 	}

@@ -1,0 +1,15 @@
+SPDX-License-Identifier: CC0-1.0
+
+CC0 1.0 Universal Public Domain Dedication
+
+The synthetic timetable, query and literal expectation data in fixtures.json
+was created for this project by Ertyoii in 2026. To the extent possible under
+law, Ertyoii has waived all copyright and related or neighboring rights to that
+synthetic data under CC0 1.0 Universal. The data is provided without warranty.
+
+The complete CC0 1.0 Universal legal instrument is available at:
+https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+This dedication applies to fixtures.json only. It does not relicense the Go
+test source, routing implementation, documentation, or third-party material.
+The Go test source and documentation remain under the project's MIT License.

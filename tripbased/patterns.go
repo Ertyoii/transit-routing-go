@@ -161,6 +161,10 @@ func BuildPatterns(ctx context.Context, d model.Dataset, c PatternConfig) (x *Pa
 		err = fmt.Errorf("Transfer Patterns requires one backend cell and explicit positive budgets")
 		return
 	}
+	if c.Profile.WalkingPolicy != "" {
+		err = fmt.Errorf("Transfer Patterns capability: role-capped profile construction not qualified")
+		return
+	}
 	for _, v := range d.Connections {
 		if err = x.tick(ctx); err != nil {
 			return
@@ -173,12 +177,22 @@ func BuildPatterns(ctx context.Context, d model.Dataset, c PatternConfig) (x *Pa
 		}
 		x.footpaths[v.ID] = v
 	}
+	if c.Profile.Semantics == "static_stop_pair_v1" {
+		x.snap.Profile = "basic_tp_static_stop_pair_transitive_nonbinding_v1"
+		if c.Profile.ProfilePolicy == "retained_exact_event_v1" {
+			x.snap.Profile = "basic_tp_static_stop_pair_retained_exact_event_nonbinding_v1"
+		}
+	}
 	start := time.Now()
 	x.base, err = buildFlash(ctx, d, c.Profile, func(w FlashWitness) error {
 		x.snap.Stats.ProfileJourneys++
 		return x.addPattern(ctx, w.Source, w.Target, w.Departure, w.Journey)
 	})
-	x.snap.PhasesNS["canonical_backend_and_pattern_insertion"] = time.Since(start).Nanoseconds()
+	phase := "canonical_backend_and_pattern_insertion"
+	if c.Profile.Semantics == "static_stop_pair_v1" {
+		phase = "rule_backend_and_pattern_insertion"
+	}
+	x.snap.PhasesNS[phase] = time.Since(start).Nanoseconds()
 	if err != nil {
 		return
 	}
@@ -192,8 +206,16 @@ func BuildPatterns(ctx context.Context, d model.Dataset, c PatternConfig) (x *Pa
 			if p.Duration == 0 {
 				continue
 			}
-			j := paper.Journey(p.Append(nil, 0))
-			if err = x.addPattern(ctx, x.base.names[source], p.To, 0, j); err != nil {
+			ready := int64(0)
+			if c.Profile.Semantics == "static_stop_pair_v1" {
+				var end int64
+				ready, end = x.base.ruleWindow()
+				if ready+p.Duration > end {
+					continue
+				}
+			}
+			j := paper.Journey(p.Append(nil, ready))
+			if err = x.addPattern(ctx, x.base.names[source], p.To, ready, j); err != nil {
 				return
 			}
 		}

@@ -93,7 +93,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 		out.Stats.Labels++
 		return nil
 	}
-	addStop := func(bag []multiLabel, c multiLabel) ([]multiLabel, bool, error) {
+	addStop := func(bag []multiLabel, c multiLabel, walk paper.Path, start int64) ([]multiLabel, bool, error) {
 		for _, old := range bag {
 			out.Stats.DominanceChecks++
 			if old.time <= c.time && old.walk <= c.walk {
@@ -109,6 +109,9 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 				kept = append(kept, old)
 			}
 		}
+		// Rejected labels need no walking witness; admitted labels retain the
+		// exact same path, clocks and insertion order.
+		c.parent = walk.Append(c.parent, start)
 		return append(kept, c), true, nil
 	}
 	addRoute := func(bag []routeLabel, c routeLabel) ([]routeLabel, error) {
@@ -129,7 +132,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 		}
 		return append(kept, c), nil
 	}
-	addAnswer := func(c multiAnswer) error {
+	addAnswer := func(c multiAnswer, walk paper.Path, start int64) error {
 		if c.time > q.LatestArrival {
 			return nil
 		}
@@ -148,6 +151,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 				kept = append(kept, old)
 			}
 		}
+		c.parent = walk.Append(c.parent, start)
 		answers = append(kept, c)
 		return nil
 	}
@@ -168,7 +172,8 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 		err = e
 		return
 	}
-	previous := map[string][]multiLabel{}
+	previous := make([][]multiLabel, len(x.atStop))
+	previousStops := []int{}
 	for i, w := range paths {
 		at := q.Departure + w.Duration
 		if cfg.EarlyPruning {
@@ -181,10 +186,9 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 		if at > q.LatestArrival {
 			continue
 		}
-		n := w.Append(nil, q.Departure)
 		if w.To == q.Destination {
 			if w.Duration <= q.Walking.Direct {
-				if err = addAnswer(multiAnswer{at, w.Duration, 0, n}); err != nil {
+				if err = addAnswer(multiAnswer{at, w.Duration, 0, nil}, w, q.Departure); err != nil {
 					return
 				}
 			}
@@ -192,44 +196,37 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 		}
 		if w.Duration <= q.Walking.Access {
 			var e error
-			previous[w.To], _, e = addStop(previous[w.To], multiLabel{at, w.Duration, n})
+			stop := x.stopIDs[w.To]
+			wasEmpty := len(previous[stop]) == 0
+			previous[stop], _, e = addStop(previous[stop], multiLabel{at, w.Duration, nil}, w, q.Departure)
+			if wasEmpty && len(previous[stop]) > 0 {
+				previousStops = append(previousStops, stop)
+			}
 			if e != nil {
 				err = e
 				return
 			}
 		}
 	}
-	for boards := 1; boards <= q.MaxBoardings && len(previous) > 0; boards++ {
+	for boards := 1; boards <= q.MaxBoardings && len(previousStops) > 0; boards++ {
 		if err = ctx.Err(); err != nil {
 			return
 		}
 		out.Stats.Rounds++
-		queue := map[int]int{}
-		for s := range previous {
-			for _, o := range x.at[s] {
-				p, ok := queue[o.route]
-				if !ok || o.position < p {
-					queue[o.route] = o.position
-				}
-			}
-		}
-		routes := []int{}
-		for r := range queue {
-			routes = append(routes, r)
-		}
-		sort.Ints(routes)
-		next := map[string][]multiLabel{}
+		queue, routes := x.collectRoutes(previousStops)
+		next := make([][]multiLabel, len(x.atStop))
+		nextStops := []int{}
 		for _, r := range routes {
 			out.Stats.Routes++
 			route := x.routes[r]
 			bag := []routeLabel{}
-			for i := queue[r]; i < len(route.trips[0].cs); i++ {
+			for i := queue[r] - 1; i < len(route.trips[0].cs); i++ {
 				if err = ctx.Err(); err != nil {
 					return
 				}
 				prototype := route.trips[0].cs[i]
 				if prototype.Pickup && x.p.Accessible(q, prototype.From) {
-					for _, label := range previous[prototype.From] {
+					for _, label := range previous[route.from[i]] {
 						t := sort.Search(len(route.trips), func(j int) bool { return route.trips[j].cs[i].Departure >= label.time })
 						if t == len(route.trips) || !x.p.TripAllowed(q, route.trips[t].id) {
 							continue
@@ -244,7 +241,9 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 						}
 					}
 				}
-				continuing := make([]routeLabel, 0, len(bag))
+				// Compact in place: the write position never exceeds the read
+				// position, and labels are copied by value before appending.
+				continuing := bag[:0]
 				for _, l := range bag {
 					if err = ctx.Err(); err != nil {
 						return
@@ -264,7 +263,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 						continue
 					}
 					if c.To == q.Destination {
-						if err = addAnswer(multiAnswer{c.Arrival, l.walk, boards, l.parent}); err != nil {
+						if err = addAnswer(multiAnswer{c.Arrival, l.walk, boards, l.parent}, paper.Path{}, 0); err != nil {
 							return
 						}
 						continue
@@ -289,7 +288,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 						}
 						if w.To == q.Destination {
 							if w.Duration <= q.Walking.Egress {
-								if err = addAnswer(multiAnswer{at, l.walk + w.Duration, boards, w.Append(l.parent, c.Arrival)}); err != nil {
+								if err = addAnswer(multiAnswer{at, l.walk + w.Duration, boards, l.parent}, w, c.Arrival); err != nil {
 									return
 								}
 							}
@@ -306,18 +305,23 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 						if !allowed || at > q.LatestArrival {
 							continue
 						}
-						newBag, _, e := addStop(next[w.To], multiLabel{at, l.walk + w.Duration, w.Append(l.parent, c.Arrival)})
+						stop := x.stopIDs[w.To]
+						newBag, _, e := addStop(next[stop], multiLabel{at, l.walk + w.Duration, l.parent}, w, c.Arrival)
 						if e != nil {
 							err = e
 							return
 						}
-						next[w.To] = newBag
+						if len(next[stop]) == 0 && len(newBag) > 0 {
+							nextStops = append(nextStops, stop)
+						}
+						next[stop] = newBag
 					}
 				}
+				clear(bag[len(continuing):])
 				bag = continuing
 			}
 		}
-		previous = next
+		previous, previousStops = next, nextStops
 	}
 	return
 }

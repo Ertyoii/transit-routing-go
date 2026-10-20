@@ -13,38 +13,71 @@ import (
 )
 
 type FlashLimits struct {
-	MaxStops         int `json:"max_stops"`
-	MaxTrips         int `json:"max_trips"`
-	MaxClosurePaths  int `json:"max_closure_paths"`
-	MaxWalkSettled   int `json:"max_walk_settled"`
-	MaxTransfers     int `json:"max_transfers"`
-	MaxRuns          int `json:"max_runs"`
-	MaxWork          int `json:"max_work"`
-	MaxFlagBytes     int `json:"max_flag_bytes"`
-	MaxWitnesses     int `json:"max_witnesses"`
-	MaxQuerySegments int `json:"max_query_segments"`
+	MaxRetainedReadiness int `json:"max_retained_readiness,omitempty"`
+	MaxRetainedRuns      int `json:"max_retained_runs,omitempty"`
+	MaxRetainedSources   int `json:"max_retained_sources,omitempty"`
+	MaxRetainedQueued    int `json:"max_retained_queued,omitempty"`
+	MaxSuffixBytes       int `json:"max_suffix_bytes,omitempty"`
+	MaxSnapshotTransfers int `json:"max_snapshot_transfers,omitempty"`
+	MaxStops             int `json:"max_stops"`
+	MaxTrips             int `json:"max_trips"`
+	MaxClosurePaths      int `json:"max_closure_paths"`
+	MaxWalkSettled       int `json:"max_walk_settled"`
+	MaxTransfers         int `json:"max_transfers"`
+	MaxRuns              int `json:"max_runs"`
+	MaxWork              int `json:"max_work"`
+	MaxFlagBytes         int `json:"max_flag_bytes"`
+	MaxWitnesses         int `json:"max_witnesses"`
+	MaxQuerySegments     int `json:"max_query_segments"`
 }
 type FlashConfig struct {
+	RetainedSourceStart string `json:"retained_source_start,omitempty"`
+	ProfilePolicy       string `json:"profile_policy,omitempty"`
+	// Empty keeps nonbinding-role certification. Only conservative semantic flags
+	// may compose with the independently role-capped query kernel.
+	WalkingPolicy string `json:"walking_policy,omitempty"`
+	// Empty retains the original canonical/restricted contract.
+	Semantics    string      `json:"semantics,omitempty"`
 	Cells        int         `json:"cells"`
 	MaxBoardings int         `json:"max_boardings"`
 	Limits       FlashLimits `json:"limits"`
 }
 type FlashStats struct {
-	Work                int    `json:"work"`
-	WalkSettled         int    `json:"walk_settled"`
-	ClosurePaths        int    `json:"closure_paths"`
-	TransferRuns        int    `json:"transfer_runs"`
-	ProfileRuns         int    `json:"profile_runs"`
-	CanonicalTransfers  int    `json:"canonical_transfers"`
-	SetFlags            int    `json:"set_flags"`
-	UnflaggedTransfers  int    `json:"unflagged_transfers"`
-	FlagBytes           int    `json:"flag_bytes"`
-	Queued              int    `json:"queued_segments"`
-	LocalPruned         int    `json:"local_pruned"`
-	FootpathPruned      int    `json:"footpath_pruned"`
-	EqualArrivalRepairs int    `json:"equal_arrival_repairs"`
-	EqualReachedRepairs int    `json:"equal_reached_repairs"`
-	EnqueuePruned       [4]int `json:"enqueue_pruned_e1_e2a_e2b_e2c"`
+	RetainedWork                  int    `json:"retained_profile_work,omitempty"`
+	RetainedProfileNS             int64  `json:"retained_profile_ns,omitempty"`
+	RetainedSourcesStarted        int    `json:"retained_sources_started,omitempty"`
+	RetainedSourcesCompleted      int    `json:"retained_sources_completed,omitempty"`
+	RetainedReadiness             int    `json:"retained_offered_readiness,omitempty"`
+	RetainedPropagationRuns       int    `json:"retained_propagation_runs,omitempty"`
+	RetainedSeedOffers            int    `json:"retained_seed_offers,omitempty"`
+	RetainedTripInitializations   int    `json:"retained_trip_initializations,omitempty"`
+	RetainedTargetInitializations int    `json:"retained_target_initializations,omitempty"`
+	RetainedEnqueueTests          int    `json:"retained_enqueue_tests,omitempty"`
+	RetainedEvents                int    `json:"retained_exposed_events,omitempty"`
+	RetainedWalkRelaxations       int    `json:"retained_walk_relaxations,omitempty"`
+	RetainedTransferTests         int    `json:"retained_transfer_tests,omitempty"`
+	RetainedTargetChecks          int    `json:"retained_target_checks,omitempty"`
+	RetainedEmissions             int    `json:"retained_emitted_witnesses,omitempty"`
+	RetainedPathNodes             int    `json:"retained_path_nodes_allocated,omitempty"`
+	RetainedPeakQueued            int    `json:"retained_peak_pending_segments,omitempty"`
+	RetainedQueuePayloadBytes     int    `json:"retained_peak_queue_capacity_payload_bytes,omitempty"`
+	RetainedScratchPayloadBytes   int    `json:"retained_scratch_payload_bytes,omitempty"`
+	RetainedSeedPayloadBytes      int    `json:"retained_seed_capacity_payload_bytes,omitempty"`
+	Work                          int    `json:"work"`
+	WalkSettled                   int    `json:"walk_settled"`
+	ClosurePaths                  int    `json:"closure_paths"`
+	TransferRuns                  int    `json:"transfer_runs"`
+	ProfileRuns                   int    `json:"profile_runs"`
+	CanonicalTransfers            int    `json:"canonical_transfers"`
+	SetFlags                      int    `json:"set_flags"`
+	UnflaggedTransfers            int    `json:"unflagged_transfers"`
+	FlagBytes                     int    `json:"flag_bytes"`
+	Queued                        int    `json:"queued_segments"`
+	LocalPruned                   int    `json:"local_pruned"`
+	FootpathPruned                int    `json:"footpath_pruned"`
+	EqualArrivalRepairs           int    `json:"equal_arrival_repairs"`
+	EqualReachedRepairs           int    `json:"equal_reached_repairs"`
+	EnqueuePruned                 [4]int `json:"enqueue_pruned_e1_e2a_e2b_e2c"`
 }
 type FlashTransfer struct {
 	FromTrip    string        `json:"from_trip"`
@@ -75,31 +108,48 @@ type FlashPartition struct {
 	TotalWeight int            `json:"total_weight"`
 	CutWeight   int            `json:"cut_weight"`
 }
+
+// FlashTransferDiagnostics describes diagnostic availability, independently of
+// whole-index completeness. False phase flags must never be treated as empty
+// complete transfer/flag graphs.
+type FlashTransferDiagnostics struct {
+	TransferIndexComplete bool   `json:"transfer_index_complete"`
+	FlagMatrixComplete    bool   `json:"flag_matrix_complete"`
+	RecordsStatus         string `json:"records_status"`
+}
+
 type FlashSnapshot struct {
-	Profile         string           `json:"profile"`
-	Complete        bool             `json:"complete"`
-	Error           string           `json:"error,omitempty"`
-	Config          FlashConfig      `json:"config"`
-	Stats           FlashStats       `json:"stats"`
-	Partition       FlashPartition   `json:"partition"`
-	Lines           [][]string       `json:"lines"`
-	Transfers       []FlashTransfer  `json:"transfers"`
-	Witnesses       []FlashWitness   `json:"flag_witnesses"`
-	PhasesNS        map[string]int64 `json:"phases_ns"`
-	ClosureDiameter int64            `json:"closure_diameter"`
+	TransferDiagnostics    *FlashTransferDiagnostics `json:"transfer_diagnostics,omitempty"`
+	OmittedTransferRecords int                       `json:"omitted_transfer_records,omitempty"`
+	TransferConstruction   string                    `json:"transfer_construction,omitempty"`
+	FlagConstruction       string                    `json:"flag_construction,omitempty"`
+	Profile                string                    `json:"profile"`
+	Complete               bool                      `json:"complete"`
+	Error                  string                    `json:"error,omitempty"`
+	Config                 FlashConfig               `json:"config"`
+	Stats                  FlashStats                `json:"stats"`
+	Partition              FlashPartition            `json:"partition"`
+	Lines                  [][]string                `json:"lines"`
+	Transfers              []FlashTransfer           `json:"transfers"`
+	Witnesses              []FlashWitness            `json:"flag_witnesses"`
+	PhasesNS               map[string]int64          `json:"phases_ns"`
+	ClosureDiameter        int64                     `json:"closure_diameter"`
 }
 type FlashIndex struct {
-	base, cp    *Index
-	cfg         FlashConfig
-	snap        FlashSnapshot
-	names       []string
-	ids         map[string]int
-	walks       [][]paper.Path
-	walkMap     []map[int]*paper.Path
-	eventOffset []int
-	transferIDs [][][]int
-	flags       [][]uint64               // cell-major, bit per canonical transfer
-	profileSink func(FlashWitness) error // complete profile stream for Transfer Patterns
+	ruleTransfersReady, ruleFlagsReady bool
+	ruleTransferCount                  int
+	ruleOffsets                        [][]int
+	base, cp                           *Index
+	cfg                                FlashConfig
+	snap                               FlashSnapshot
+	names                              []string
+	ids                                map[string]int
+	walks                              [][]paper.Path
+	walkMap                            []map[int]*paper.Path
+	eventOffset                        []int
+	transferIDs                        [][][]int
+	flags                              [][]uint64               // cell-major, bit per canonical transfer
+	profileSink                        func(FlashWitness) error // complete profile stream for Transfer Patterns
 }
 type flashWork struct {
 	ctx context.Context
@@ -134,6 +184,19 @@ func (w *flashWork) run(profile bool) error {
 func (x *FlashIndex) Complete() bool { return x.snap.Complete }
 func (x *FlashIndex) Snapshot() FlashSnapshot {
 	s := x.snap
+	if x.cfg.Semantics == "static_stop_pair_v1" {
+		diagnostic := x.ruleTransferDiagnostics()
+		s.TransferDiagnostics = &diagnostic
+		s.Transfers = []FlashTransfer{}
+		s.OmittedTransferRecords = 0
+		if diagnostic.RecordsStatus == "available" {
+			s.Transfers = x.ruleTransferSnapshot()
+		} else if diagnostic.TransferIndexComplete {
+			// Only a completed offset/count phase supplies an exact omitted
+			// record count. Otherwise the unavailability reason signals unknown.
+			s.OmittedTransferRecords = x.ruleTransferCount
+		}
+	}
 	s.Lines = make([][]string, len(x.snap.Lines))
 	for i, v := range x.snap.Lines {
 		s.Lines[i] = append([]string{}, v...)
@@ -188,12 +251,54 @@ func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(F
 	if err = d.Validate(); err != nil {
 		return
 	}
-	if len(d.Transfers) > 0 {
+	if c.WalkingPolicy != "" && (c.WalkingPolicy != "query_role_caps_v1" || c.Semantics != "static_stop_pair_v1") {
+		err = fmt.Errorf("FLASH-TB capability: role-capped walking requires static-stop-pair conservative flags")
+		return
+	}
+	if c.ProfilePolicy != "" && (c.ProfilePolicy != "retained_exact_event_v1" || c.Semantics != "static_stop_pair_v1" || sink == nil) {
+		err = fmt.Errorf("FLASH-TB capability: retained profile policy requires static-stop-pair TP construction")
+		return
+	}
+	if c.RetainedSourceStart != "" && c.ProfilePolicy != "retained_exact_event_v1" {
+		err = fmt.Errorf("retained source rotation requires retained exact-event profiles")
+		return
+	}
+	if c.ProfilePolicy != "" && (l.MaxRetainedReadiness < 1 || l.MaxRetainedRuns < 1 || l.MaxRetainedSources < 1 || l.MaxRetainedQueued < 1) {
+		err = fmt.Errorf("retained profiles require explicit positive readiness, propagation, source and queue guards")
+		return
+	}
+	if c.Semantics != "" && c.Semantics != "static_stop_pair_v1" {
+		err = fmt.Errorf("FLASH-TB capability: unknown semantics policy")
+		return
+	}
+	if c.Semantics == "static_stop_pair_v1" {
+		if l.MaxSuffixBytes <= 0 || l.MaxSnapshotTransfers <= 0 {
+			err = fmt.Errorf("FLASH-TB requires positive suffix-state byte and snapshot-record budgets")
+			return
+		}
+		if len(d.Connections) > l.MaxSuffixBytes/8/((c.Cells+63)/64) {
+			err = fmt.Errorf("FLASH-TB incomplete: suffix-state byte budget exhausted")
+			return
+		}
+		for _, r := range d.Transfers {
+			if r.FromTrip != "" || r.ToTrip != "" || r.FromRoute != "" || r.ToRoute != "" {
+				err = fmt.Errorf("FLASH-TB capability: trip/route-specific rules unsupported")
+				return
+			}
+		}
+		x.snap.Profile = "flash_tb_static_stop_pair_suffix_flags_nonbinding_v1"
+		if c.WalkingPolicy == "query_role_caps_v1" {
+			x.snap.Profile = "flash_tb_static_stop_pair_suffix_flags_role_caps_v1"
+		}
+		x.snap.TransferConstruction = "complete earliest feasible event-to-line transfers; conservative superset, not Trans-ULTRA reduction"
+		x.snap.FlagConstruction = "all feasible suffix target cells; conservative, not canonical optimal-profile flags"
+	}
+	if c.Semantics == "" && len(d.Transfers) > 0 {
 		err = fmt.Errorf("FLASH-TB capability: GTFS transfer rules unsupported")
 		return
 	}
 	for _, v := range d.Connections {
-		if !v.Pickup || !v.Dropoff || v.Arrival <= v.Departure || v.From == v.To {
+		if c.Semantics == "" && (!v.Pickup || !v.Dropoff) || v.Arrival <= v.Departure || v.From == v.To {
 			err = fmt.Errorf("FLASH-TB capability: unrestricted positive non-self rides required")
 			return
 		}
@@ -204,6 +309,12 @@ func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(F
 	sort.Strings(x.names)
 	for i, s := range x.names {
 		x.ids[s] = i
+	}
+	if c.RetainedSourceStart != "" {
+		if _, ok := x.ids[c.RetainedSourceStart]; !ok {
+			err = fmt.Errorf("retained source rotation requires an existing stop")
+			return
+		}
 	}
 	w := &flashWork{ctx, x}
 	start := time.Now()
@@ -229,9 +340,11 @@ func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(F
 		x.snap.Lines = append(x.snap.Lines, ids)
 	}
 	cp := *x.base
-	cp.links = make([][][]link, len(cp.trips))
-	for ti, t := range cp.trips {
-		cp.links[ti] = make([][]link, len(t.cs))
+	if c.Semantics == "" {
+		cp.links = make([][][]link, len(cp.trips))
+		for ti, t := range cp.trips {
+			cp.links[ti] = make([][]link, len(t.cs))
+		}
 	}
 	x.cp = &cp
 	start = time.Now()
@@ -240,11 +353,20 @@ func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(F
 	}
 	x.snap.PhasesNS["partition"] = time.Since(start).Nanoseconds()
 	start = time.Now()
-	if err = x.transULTRA(w); err != nil {
+	if c.Semantics == "static_stop_pair_v1" {
+		err = x.ruleTransfers(w)
+	} else {
+		err = x.transULTRA(w)
+	}
+	if err != nil {
 		return
 	}
-	x.snap.PhasesNS["trans_ultra"] = time.Since(start).Nanoseconds()
-	words := (len(x.snap.Transfers) + 63) / 64
+	if c.Semantics == "static_stop_pair_v1" {
+		x.snap.PhasesNS["complete_rule_transfer_graph"] = time.Since(start).Nanoseconds()
+	} else {
+		x.snap.PhasesNS["trans_ultra"] = time.Since(start).Nanoseconds()
+	}
+	words := (x.transferCount() + 63) / 64
 	if words > l.MaxFlagBytes/8/c.Cells {
 		err = fmt.Errorf("FLASH-TB incomplete: flag byte budget exhausted")
 		return
@@ -255,17 +377,38 @@ func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(F
 	}
 	x.snap.Stats.FlagBytes = words * 8 * c.Cells
 	start = time.Now()
-	if err = x.profiles(w); err != nil {
+	if c.Semantics == "static_stop_pair_v1" {
+		err = x.suffixFlags(w)
+		if err == nil && sink != nil {
+			err = x.ruleProfiles(w)
+		}
+	} else {
+		err = x.profiles(w)
+	}
+	if err != nil {
 		return
 	}
-	x.snap.PhasesNS["canonical_profiles"] = time.Since(start).Nanoseconds()
-	for i := range x.snap.Transfers {
-		for cell := range x.flags {
-			if x.flagged(i, cell) {
-				x.snap.Transfers[i].Cells = append(x.snap.Transfers[i].Cells, cell)
+	if c.Semantics == "static_stop_pair_v1" {
+		x.snap.PhasesNS["suffix_flags_and_optional_complete_profiles"] = time.Since(start).Nanoseconds()
+	} else {
+		x.snap.PhasesNS["canonical_profiles"] = time.Since(start).Nanoseconds()
+	}
+	for id := 0; id < x.transferCount(); id++ {
+		if c.Semantics != "" {
+			if err = w.tick(); err != nil {
+				return
 			}
 		}
-		if len(x.snap.Transfers[i].Cells) == 0 {
+		flagged := false
+		for cell := range x.flags {
+			if x.flagged(id, cell) {
+				flagged = true
+				if c.Semantics == "" {
+					x.snap.Transfers[id].Cells = append(x.snap.Transfers[id].Cells, cell)
+				}
+			}
+		}
+		if !flagged {
 			x.snap.Stats.UnflaggedTransfers++
 		}
 	}
@@ -299,6 +442,12 @@ func (x *FlashIndex) checkQuery(ctx context.Context, q model.Query) (model.Query
 	if q.TransferBuffer != 0 || q.AccessibleOnly || q.MaxBoardings > x.cfg.MaxBoardings {
 		return q, fmt.Errorf("FLASH-TB capability: buffer/accessibility/boarding profile mismatch")
 	}
+	if x.cfg.WalkingPolicy == "query_role_caps_v1" {
+		if q.Walking == nil {
+			return q, fmt.Errorf("FLASH-TB capability: explicit walking roles required")
+		}
+		return q, nil
+	}
 	wl := q.Walking
 	if wl.Transfer < x.snap.ClosureDiameter {
 		return q, fmt.Errorf("FLASH-TB capability: transfer cap may bind")
@@ -325,6 +474,9 @@ func (x *FlashIndex) searchFlash(ctx context.Context, q model.Query, mode int) (
 		return Result{Journeys: []model.Journey{}, Error: e.Error()}, e
 	}
 	q = checked
+	if x.cfg.WalkingPolicy == "query_role_caps_v1" {
+		return x.searchRoleCapped(ctx, q, mode)
+	}
 
 	if mode == 2 {
 		return x.base.search(ctx, q, nil, true)
@@ -333,5 +485,5 @@ func (x *FlashIndex) searchFlash(ctx context.Context, q model.Query, mode int) (
 		return x.cp.search(ctx, q, nil, true)
 	}
 	cell := x.snap.Partition.Cells[q.Destination]
-	return x.cp.search(ctx, q, func(t, i, e int) bool { return x.flagged(x.transferIDs[t][i][e], cell) }, true)
+	return x.cp.search(ctx, q, func(t, i, e int) bool { return x.flagged(x.transferID(t, i, e), cell) }, true)
 }

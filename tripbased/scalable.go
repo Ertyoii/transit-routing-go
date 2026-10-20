@@ -252,6 +252,10 @@ func BuildScalable(ctx context.Context, d model.Dataset, c ScalableConfig) (x *S
 	if err = d.Validate(); err != nil {
 		return
 	}
+	if c.Patterns.Profile.Semantics != "" || c.Patterns.Profile.ProfilePolicy != "" {
+		err = fmt.Errorf("Scalable TP capability: semantic profile policy not qualified")
+		return
+	}
 	if len(d.Transfers) > 0 {
 		err = fmt.Errorf("Scalable TP capability: GTFS transfer rules unsupported")
 		return

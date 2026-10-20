@@ -9,15 +9,19 @@ import (
 )
 
 type Stats struct {
-	Rounds          int `json:"rounds"`
-	QueuedSegments  int `json:"queued_trip_segments"`
-	TripSegments    int `json:"processed_trip_segments"`
-	Connections     int `json:"reconstruction_connection_visits"`
-	Transfers       int `json:"transfer_visits"`
-	LaterTripLabels int `json:"later_trip_label_updates"`
-	ArrivalPruned   int `json:"arrival_pruned_segments"`
-	WalkClosures    int `json:"query_walk_closures"`
-	FlagRejected    int `json:"flag_rejected_transfers,omitempty"`
+	Rounds                      int `json:"rounds"`
+	QueuedSegments              int `json:"queued_trip_segments"`
+	TripSegments                int `json:"processed_trip_segments"`
+	Connections                 int `json:"reconstruction_connection_visits"`
+	Transfers                   int `json:"transfer_visits"`
+	LaterTripLabels             int `json:"later_trip_label_updates"`
+	ArrivalPruned               int `json:"arrival_pruned_segments"`
+	WalkClosures                int `json:"query_walk_closures"`
+	FlagRejected                int `json:"flag_rejected_transfers,omitempty"`
+	DestinationWalkChecks       int `json:"destination_walk_checks,omitempty"`
+	DestinationWalkRepairs      int `json:"destination_walk_repairs,omitempty"`
+	RepairTripSearches          int `json:"repair_trip_searches,omitempty"`
+	DominatedWalkParentsAvoided int `json:"dominated_walk_parents_avoided,omitempty"`
 }
 type Result struct {
 	Journeys []model.Journey `json:"journeys"`
@@ -39,7 +43,11 @@ func (x *Index) Search(ctx context.Context, q model.Query) (Result, error) {
 // walk into this destination fits Egress. Thus a transfer passing the target
 // can be replaced by its feasible shorter egress prefix. Ordinary TB has no
 // such destination certificate and retains its stronger global requirement.
-func (x *Index) search(ctx context.Context, q model.Query, filter func(int, int, int) bool, targetEgressNonbinding bool) (out Result, err error) {
+func (x *Index) search(ctx context.Context, q model.Query, filter func(int, int, int) bool, targetEgressNonbinding bool) (Result, error) {
+	return x.searchWalking(ctx, q, filter, targetEgressNonbinding, false)
+}
+
+func (x *Index) searchWalking(ctx context.Context, q model.Query, filter func(int, int, int) bool, targetEgressNonbinding, capped bool) (out Result, err error) {
 	out.Journeys = []model.Journey{}
 	defer func() {
 		out.Complete = err == nil
@@ -58,7 +66,7 @@ func (x *Index) search(ctx context.Context, q model.Query, filter func(int, int,
 		err = fmt.Errorf("Trip-Based capability: intermediate walking exceeds prepared limit")
 		return
 	}
-	if !targetEgressNonbinding && q.Walking.Egress < q.Walking.Transfer {
+	if !targetEgressNonbinding && !capped && q.Walking.Egress < q.Walking.Transfer {
 		err = fmt.Errorf("Trip-Based capability: egress must cover intermediate walking for destination-independent transfer closure")
 		return
 	}
@@ -73,6 +81,10 @@ func (x *Index) search(ctx context.Context, q model.Query, filter func(int, int,
 		return
 	}
 	walker := x.p.Walker(q)
+	var repairs map[*paper.Path]destinationWalk
+	if capped {
+		repairs = make(map[*paper.Path]destinationWalk)
+	}
 	defer func() { out.Stats.WalkClosures = walker.Count }()
 	reached := make([]int, len(x.trips))
 	for ti, t := range x.trips {
@@ -89,10 +101,11 @@ func (x *Index) search(ctx context.Context, q model.Query, filter func(int, int,
 		out.Stats.QueuedSegments++
 		t := x.trips[ti]
 		for _, later := range x.lines[t.line].trips[t.rank:] {
-			if board < reached[later] {
-				reached[later] = board
-				out.Stats.LaterTripLabels++
+			if board >= reached[later] {
+				break
 			}
+			reached[later] = board
+			out.Stats.LaterTripLabels++
 		}
 		return nil
 	}
@@ -126,6 +139,10 @@ func (x *Index) search(ctx context.Context, q model.Query, filter func(int, int,
 			}
 			rank := sort.Search(len(l.trips), func(r int) bool { return x.trips[l.trips[r]].cs[o.position].Departure >= at })
 			if rank < len(l.trips) {
+				if o.position >= reached[l.trips[rank]] {
+					out.Stats.DominatedWalkParentsAvoided++
+					continue
+				}
 				if err = enqueue(&queue, l.trips[rank], o.position, w.Append(nil, q.Departure)); err != nil {
 					return
 				}
@@ -173,10 +190,10 @@ func (x *Index) search(ctx context.Context, q model.Query, filter func(int, int,
 					err = e
 					return
 				}
-				for _, w := range ws {
-					if w.To == q.Destination && w.Duration <= q.Walking.Egress && c.Arrival+w.Duration <= q.LatestArrival && c.Arrival+w.Duration < best.Time {
-						best = paper.Label{Time: c.Arrival + w.Duration, Parent: w.Append(parent, c.Arrival)}
-					}
+				// Walker paths are lexically ordered by endpoint. One lookup replaces
+				// a whole closure scan at every event of the same alighting stop.
+				if w := endpointPath(ws, q.Destination); w != nil && w.Duration <= q.Walking.Egress && c.Arrival+w.Duration <= q.LatestArrival && c.Arrival+w.Duration < best.Time {
+					best = paper.Label{Time: c.Arrival + w.Duration, Parent: w.Append(parent, c.Arrival)}
 				}
 				if boards == q.MaxBoardings || i >= s.end || c.Arrival >= best.Time {
 					continue
@@ -187,19 +204,41 @@ func (x *Index) search(ctx context.Context, q model.Query, filter func(int, int,
 						out.Stats.FlagRejected++
 						continue
 					}
-					if tr.walk.Duration > q.Walking.Transfer {
-						continue
-					}
-					touchesTarget := false
-					for _, edge := range tr.walk.Edges {
-						if edge.To == q.Destination {
-							touchesTarget = true
-							break
+					if out.Stats.Transfers%256 == 0 {
+						if e := ctx.Err(); e != nil {
+							err = e
+							return
 						}
 					}
-					if touchesTarget {
+					if tr.walk.Duration > q.Walking.Transfer || c.Arrival+tr.walk.Duration > q.LatestArrival || x.trips[tr.trip].cs[tr.board].Arrival > q.LatestArrival {
 						continue
 					}
+					if capped {
+						var ok bool
+						tr, ok, err = x.repairDestinationTransfer(q, c, tr, ws, repairs, &out.Stats)
+						if err != nil {
+							return
+						}
+						if !ok {
+							continue
+						}
+					} else {
+						touchesTarget := false
+						for _, edge := range tr.walk.Edges {
+							if edge.To == q.Destination {
+								touchesTarget = true
+								break
+							}
+						}
+						if touchesTarget {
+							continue
+						}
+					}
+					if tr.board >= reached[tr.trip] {
+						out.Stats.DominatedWalkParentsAvoided++
+						continue
+					}
+
 					if err = enqueue(&next, tr.trip, tr.board, tr.walk.Append(parent, c.Arrival)); err != nil {
 						return
 					}

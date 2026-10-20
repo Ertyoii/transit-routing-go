@@ -3,6 +3,8 @@ package tripbased
 import (
 	"context"
 	"fmt"
+	"runtime"
+	"time"
 
 	"github.com/ertyoii/transit-routing-go/model"
 	"github.com/ertyoii/transit-routing-go/paper"
@@ -95,23 +97,53 @@ func (x *TREXIndex) customizeTREX(ctx context.Context) error {
 	// Each level reads ranks >= level. Promotions within the level cannot change
 	// eligibility, so processing order does not affect the retained transfer set.
 	for level := 0; level < x.cfg.Levels; level++ {
-		for ti, t := range x.base.trips {
-			for board, c := range t.cs {
-				if e := x.tick(ctx); e != nil {
-					return e
-				}
-				a, b := x.cells[x.ids[c.From]]>>uint(level), x.cells[x.ids[c.To]]>>uint(level)
-				if a == b {
-					continue
-				}
-				if x.snap.Stats.EventRuns == x.cfg.Limits.MaxRuns {
-					return fmt.Errorf("T-REX incomplete: event-run budget exhausted")
-				}
-				x.snap.Stats.EventRuns++
-				if e := x.eventTREX(ctx, ti, board, level, b, reached, &touched); e != nil {
-					return e
+		progress := TREXLevelWork{Level: level}
+		before := x.snap.Stats
+		var m0, m1 runtime.MemStats
+		runtime.ReadMemStats(&m0)
+		start := time.Now()
+		e := func() error {
+			for ti, t := range x.base.trips {
+				for board, c := range t.cs {
+					if e := x.tick(ctx); e != nil {
+						return e
+					}
+					a, b := x.cells[x.ids[c.From]]>>uint(level), x.cells[x.ids[c.To]]>>uint(level)
+					if a == b {
+						continue
+					}
+					if x.snap.Stats.EventRuns == x.cfg.Limits.MaxRuns {
+						return fmt.Errorf("T-REX incomplete: event-run budget exhausted")
+					}
+					x.snap.Stats.EventRuns++
+					progress.Started++
+					eventBefore := x.snap.Stats
+					e := x.eventTREX(ctx, ti, board, level, b, reached, &touched)
+					ew := TREXEventWork{Trip: t.id, Board: board, Work: x.snap.Stats.Work - eventBefore.Work, Queued: x.snap.Stats.QueuedSegments - eventBefore.QueuedSegments, Promotions: x.snap.Stats.RankPromotions - eventBefore.RankPromotions, Complete: e == nil}
+					progress.Last = ew
+					if progress.Started == 1 || ew.Work > progress.MaxWork.Work {
+						progress.MaxWork = ew
+					}
+					if e != nil {
+						return e
+					}
+					progress.Completed++
 				}
 			}
+			return nil
+		}()
+		runtime.ReadMemStats(&m1)
+		progress.ElapsedNS = time.Since(start).Nanoseconds()
+		progress.AllocatedBytes = m1.TotalAlloc - m0.TotalAlloc
+		progress.Work = x.snap.Stats.Work - before.Work
+		progress.Queued = x.snap.Stats.QueuedSegments - before.QueuedSegments
+		progress.Promotions = x.snap.Stats.RankPromotions - before.RankPromotions
+		progress.Traversals = x.snap.Stats.Traversals - before.Traversals
+		progress.Redundant = x.snap.Stats.RedundantWitnesses - before.RedundantWitnesses
+		progress.Complete = e == nil
+		x.snap.Stats.Levels = append(x.snap.Stats.Levels, progress)
+		if e != nil {
+			return e
 		}
 	}
 	return nil
@@ -178,7 +210,7 @@ func (x *TREXIndex) eventTREX(ctx context.Context, source, board, level, cell in
 					if e := x.tick(ctx); e != nil {
 						return e
 					}
-					if x.snap.Transfers[n.edge].Rank < level+1 {
+					if int(x.ranks[n.edge]) < level+1 {
 						promotes = true
 						break
 					}
@@ -190,10 +222,10 @@ func (x *TREXIndex) eventTREX(ctx context.Context, source, board, level, cell in
 				// eligibility. Preserve the traversal and trim point, but retain
 				// a full raw proof only when at least one rank increases.
 				if promotes {
-					if len(x.snap.Witnesses) == x.cfg.Limits.MaxWitnesses {
+					if x.proofs.count == x.cfg.Limits.MaxWitnesses {
 						return fmt.Errorf("T-REX incomplete: traversal witness budget exhausted")
 					}
-					j, ids, e := x.unpackTREX(s.node, p, nil, x.base.trips[source].cs[board].Departure, func() error { return x.tick(ctx) })
+					_, ids, e := x.unpackTREX(s.node, p, nil, x.base.trips[source].cs[board].Departure, func() error { return x.tick(ctx) })
 					if e != nil {
 						return e
 					}
@@ -201,12 +233,12 @@ func (x *TREXIndex) eventTREX(ctx context.Context, source, board, level, cell in
 						if e := x.tick(ctx); e != nil {
 							return e
 						}
-						if x.snap.Transfers[id].Rank < level+1 {
-							x.snap.Transfers[id].Rank = level + 1
+						if int(x.ranks[id]) < level+1 {
+							x.ranks[id] = uint8(level + 1)
 							x.snap.Stats.RankPromotions++
 						}
 					}
-					x.snap.Witnesses = append(x.snap.Witnesses, TREXWitness{level, cell, x.base.trips[source].id, board, t.id, p, ids, j})
+					x.proofs.append(level, board, p, ids)
 				}
 				s.end = p
 				break
@@ -225,7 +257,7 @@ func (x *TREXIndex) eventTREX(ctx context.Context, source, board, level, cell in
 					if e := x.tick(ctx); e != nil {
 						return e
 					}
-					if x.snap.Transfers[id].Rank < level {
+					if int(x.ranks[id]) < level {
 						continue
 					}
 					edge := x.edges[id]

@@ -8,6 +8,7 @@ import (
 
 type Checker struct {
 	datasetSHA256 string
+	queries       *model.QueryValidator
 	data          model.Dataset
 	stops         map[string]model.Stop
 	trips         map[string]model.Trip
@@ -21,7 +22,7 @@ func New(d model.Dataset) (*Checker, error) {
 		return nil, err
 	}
 	d = d.Clone()
-	c := &Checker{datasetSHA256: model.DatasetFingerprint(d), data: d, stops: map[string]model.Stop{}, trips: map[string]model.Trip{}, rides: map[string]model.Connection{}, walks: map[string]model.Footpath{}}
+	c := &Checker{queries: model.NewQueryValidator(d), datasetSHA256: model.DatasetFingerprint(d), data: d, stops: map[string]model.Stop{}, trips: map[string]model.Trip{}, rides: map[string]model.Connection{}, walks: map[string]model.Footpath{}}
 	for _, x := range d.Stops {
 		c.stops[x.ID] = x
 	}
@@ -40,7 +41,7 @@ func New(d model.Dataset) (*Checker, error) {
 // Binding validates the query and binds it to this checker's owned network.
 // It supplies metadata only; journey feasibility still requires Check.
 func (c *Checker) Binding(q model.Query) (model.ResultBinding, error) {
-	if err := q.Validate(c.data); err != nil {
+	if err := c.queries.Validate(q); err != nil {
 		return model.ResultBinding{}, err
 	}
 	return model.BindQuery(c.datasetSHA256, q), nil
@@ -50,7 +51,7 @@ func (c *Checker) Check(q model.Query, j model.Journey) (model.Validated, error)
 	fail := func(format string, args ...any) (model.Validated, error) {
 		return model.Validated{}, fmt.Errorf(format, args...)
 	}
-	if err := q.Validate(c.data); err != nil {
+	if err := c.queries.Validate(q); err != nil {
 		return model.Validated{}, err
 	}
 	if len(j.Legs) > q.MaxLegs {

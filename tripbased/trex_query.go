@@ -41,6 +41,10 @@ func (x *TREXIndex) SearchUnranked(ctx context.Context, q model.Query) (TREXResu
 }
 
 func (x *TREXIndex) searchTREX(ctx context.Context, q model.Query, mode string) (out TREXResult, err error) {
+	return x.searchTREXForCertificate(ctx, q, mode, false)
+}
+
+func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query, mode string, capCertificate bool) (out TREXResult, err error) {
 	out.Journeys = []model.Journey{}
 	out.Stats.Mode = mode
 	defer func() {
@@ -50,7 +54,7 @@ func (x *TREXIndex) searchTREX(ctx context.Context, q model.Query, mode string) 
 		}
 	}()
 	bounded := mode == "bounded-walking-tb"
-	if bounded {
+	if bounded || capCertificate {
 		err = x.checkTREXResources(ctx, q)
 	} else {
 		err = x.checkTREXQuery(ctx, q)
@@ -140,6 +144,9 @@ func (x *TREXIndex) searchTREX(ctx context.Context, q model.Query, mode string) 
 				return
 			}
 			line := x.base.lines[o.line]
+			if !x.base.trips[line.trips[0]].cs[o.position].Pickup {
+				continue
+			}
 			lo, hi := 0, len(line.trips)
 			for lo < hi {
 				if err = charge(); err != nil {
@@ -197,6 +204,9 @@ func (x *TREXIndex) searchTREX(ctx context.Context, q model.Query, mode string) 
 				}
 				out.Stats.TargetEvents++
 				c := x.base.trips[s.trip].cs[i]
+				if !c.Dropoff {
+					continue
+				}
 				if c.Arrival >= arrival {
 					break
 				}
@@ -258,7 +268,7 @@ func (x *TREXIndex) searchTREX(ctx context.Context, q model.Query, mode string) 
 				}
 				if mode == "rank-test" {
 					out.Stats.RankTests++
-					if x.snap.Transfers[id].Rank < relevant(x.base.trips[edge.from].cs[edge.exit].To) {
+					if int(x.ranks[id]) < relevant(x.base.trips[edge.from].cs[edge.exit].To) {
 						out.Stats.RankRejected++
 						continue
 					}

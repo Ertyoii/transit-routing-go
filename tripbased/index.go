@@ -175,9 +175,11 @@ func newIndex(ctx context.Context, d model.Dataset, cfg Config, transfers bool) 
 		return x, nil
 	}
 	x.links = make([][][]link, len(x.trips))
+	storage := transferLinkStorage{limit: cfg.MaxTransfers}
 	// Query-independent closure: no destination is absorbing during preparation.
-	// Search requires egress >= intermediate walk so a path passing its destination
-	// is dominated by terminating there. The destination is never used as transit.
+	// Legacy Search requires egress >= intermediate walk so a path passing its
+	// destination is dominated by terminating there. SearchCappedWalking instead
+	// repairs affected transfers against its absorbing query closure.
 	prepQuery := model.Query{AccessibleOnly: cfg.AccessibleOnly, TransferBuffer: cfg.TransferBuffer, Walking: &model.WalkingLimits{Transfer: cfg.TransferWalkingLimit}}
 	walker := p.Walker(prepQuery)
 	for ti, t := range x.trips {
@@ -192,9 +194,14 @@ func newIndex(ctx context.Context, d model.Dataset, cfg Config, transfers bool) 
 			if !c.Dropoff || !p.Accessible(prepQuery, c.To) {
 				continue
 			}
+			storage.begin()
+			before := walker.Count
 			paths, err := walker.Paths(ctx, c.To)
 			if err != nil {
 				return nil, err
+			}
+			if walker.Count != before {
+				x.prep.WalkingPaths += len(paths)
 			}
 			for wi := range paths {
 				w := &paths[wi]
@@ -225,24 +232,15 @@ func newIndex(ctx context.Context, d model.Dataset, cfg Config, transfers bool) 
 					if x.prep.Transfers == cfg.MaxTransfers {
 						return nil, fmt.Errorf("Trip-Based preprocessing incomplete: transfer budget %d exhausted", cfg.MaxTransfers)
 					}
-					x.links[ti][i] = append(x.links[ti][i], link{u, o.position, w})
+					storage.append(link{u, o.position, w})
 					x.prep.Transfers++
 				}
 			}
+			x.links[ti][i] = storage.finish()
 		}
 	}
-	x.prep.WalkingClosures = walker.Count
-	// Counting cached path endpoints does not expose or share the search cache.
-	for _, s := range p.Data.Stops {
-		if !p.Accessible(prepQuery, s.ID) {
-			continue
-		}
-		paths, err := walker.Paths(ctx, s.ID)
-		if err != nil {
-			return nil, err
-		}
-		x.prep.WalkingPaths += len(paths)
-	}
+	// Diagnostics count only closures needed by transfer sources. Do not run
+	// extra Dijkstra searches at unused stops solely to populate statistics.
 	x.prep.WalkingClosures = walker.Count
 	return x, nil
 }

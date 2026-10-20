@@ -1,0 +1,675 @@
+{
+  "schema": "trex-cap-synthetic-fixtures-v1",
+  "license": "CC0-1.0",
+  "fixtures": [
+    {
+      "name": "access_hidden_alternative",
+      "levels": 1,
+      "dataset": {
+        "window": {
+          "start": 25200,
+          "end": 32400
+        },
+        "data_kind": "synthetic-minimal-certificate-reproducer",
+        "schema_version": "0.2",
+        "id": "synthetic:trex-cap:access_hidden_alternative",
+        "time_zone": "Asia/Singapore",
+        "service_date": "2026-10-16",
+        "stops": [
+          {
+            "id": "Z",
+            "accessible": "yes"
+          },
+          {
+            "id": "A",
+            "accessible": "yes"
+          },
+          {
+            "id": "T",
+            "accessible": "yes"
+          }
+        ],
+        "trips": [
+          {
+            "id": "fast",
+            "accessible": "yes"
+          },
+          {
+            "id": "feasible",
+            "accessible": "yes"
+          }
+        ],
+        "connections": [
+          {
+            "id": "fast",
+            "trip_id": "fast",
+            "sequence": 0,
+            "from": "A",
+            "to": "T",
+            "departure": 26200,
+            "arrival": 26300,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "feasible",
+            "trip_id": "feasible",
+            "sequence": 0,
+            "from": "Z",
+            "to": "T",
+            "departure": 26200,
+            "arrival": 26400,
+            "pickup": true,
+            "dropoff": true
+          }
+        ],
+        "footpaths": [
+          {
+            "id": "access",
+            "from": "Z",
+            "to": "A",
+            "duration": 1,
+            "accessible": "yes"
+          }
+        ]
+      },
+      "query": {
+        "walking_limits": {
+          "access_seconds": 0,
+          "egress_seconds": 0,
+          "transfer_seconds": 900,
+          "direct_seconds": 0
+        },
+        "id": "access_hidden_alternative",
+        "origin": "Z",
+        "destination": "T",
+        "departure": 26100,
+        "latest_arrival": 29700,
+        "transfer_buffer": 0,
+        "max_walk_seconds": 900,
+        "max_boardings": 2,
+        "max_legs": 1024,
+        "accessible_only": false
+      },
+      "expected_raw_refs": [
+        [
+          "access",
+          "fast"
+        ]
+      ],
+      "expected_raw_points": [
+        {
+          "arrival": 26300,
+          "boardings": 1
+        }
+      ],
+      "expected_feasible_refs": [
+        [
+          "feasible"
+        ]
+      ],
+      "expected_feasible_points": [
+        {
+          "arrival": 26400,
+          "boardings": 1
+        }
+      ],
+      "expected_certificate_accepted": false
+    },
+    {
+      "name": "access_equal_objective_alternative",
+      "levels": 1,
+      "dataset": {
+        "window": {
+          "start": 25200,
+          "end": 32400
+        },
+        "data_kind": "synthetic-minimal-certificate-reproducer",
+        "schema_version": "0.2",
+        "id": "synthetic:trex-cap:access_equal_objective_alternative",
+        "time_zone": "Asia/Singapore",
+        "service_date": "2026-10-16",
+        "stops": [
+          {
+            "id": "Z",
+            "accessible": "yes"
+          },
+          {
+            "id": "A",
+            "accessible": "yes"
+          },
+          {
+            "id": "T",
+            "accessible": "yes"
+          }
+        ],
+        "trips": [
+          {
+            "id": "fast",
+            "accessible": "yes"
+          },
+          {
+            "id": "feasible",
+            "accessible": "yes"
+          }
+        ],
+        "connections": [
+          {
+            "id": "fast",
+            "trip_id": "fast",
+            "sequence": 0,
+            "from": "A",
+            "to": "T",
+            "departure": 26200,
+            "arrival": 26300,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "feasible",
+            "trip_id": "feasible",
+            "sequence": 0,
+            "from": "Z",
+            "to": "T",
+            "departure": 26200,
+            "arrival": 26300,
+            "pickup": true,
+            "dropoff": true
+          }
+        ],
+        "footpaths": [
+          {
+            "id": "access",
+            "from": "Z",
+            "to": "A",
+            "duration": 1,
+            "accessible": "yes"
+          }
+        ]
+      },
+      "query": {
+        "walking_limits": {
+          "access_seconds": 0,
+          "egress_seconds": 0,
+          "transfer_seconds": 900,
+          "direct_seconds": 0
+        },
+        "id": "access_equal_objective_alternative",
+        "origin": "Z",
+        "destination": "T",
+        "departure": 26100,
+        "latest_arrival": 29700,
+        "transfer_buffer": 0,
+        "max_walk_seconds": 900,
+        "max_boardings": 2,
+        "max_legs": 1024,
+        "accessible_only": false
+      },
+      "expected_raw_refs": [
+        [
+          "access",
+          "fast"
+        ]
+      ],
+      "expected_raw_points": [
+        {
+          "arrival": 26300,
+          "boardings": 1
+        }
+      ],
+      "expected_feasible_refs": [
+        [
+          "feasible"
+        ]
+      ],
+      "expected_feasible_points": [
+        {
+          "arrival": 26300,
+          "boardings": 1
+        }
+      ],
+      "expected_certificate_accepted": false
+    },
+    {
+      "name": "egress_hidden_alternative",
+      "levels": 1,
+      "dataset": {
+        "window": {
+          "start": 25200,
+          "end": 32400
+        },
+        "data_kind": "synthetic-minimal-certificate-reproducer",
+        "schema_version": "0.2",
+        "id": "synthetic:trex-cap:egress_hidden_alternative",
+        "time_zone": "Asia/Singapore",
+        "service_date": "2026-10-16",
+        "stops": [
+          {
+            "id": "S",
+            "accessible": "yes"
+          },
+          {
+            "id": "A",
+            "accessible": "yes"
+          },
+          {
+            "id": "T",
+            "accessible": "yes"
+          }
+        ],
+        "trips": [
+          {
+            "id": "fast",
+            "accessible": "yes"
+          },
+          {
+            "id": "feasible",
+            "accessible": "yes"
+          }
+        ],
+        "connections": [
+          {
+            "id": "fast",
+            "trip_id": "fast",
+            "sequence": 0,
+            "from": "S",
+            "to": "A",
+            "departure": 26200,
+            "arrival": 26300,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "feasible",
+            "trip_id": "feasible",
+            "sequence": 0,
+            "from": "S",
+            "to": "T",
+            "departure": 26200,
+            "arrival": 27000,
+            "pickup": true,
+            "dropoff": true
+          }
+        ],
+        "footpaths": [
+          {
+            "id": "egress",
+            "from": "A",
+            "to": "T",
+            "duration": 601,
+            "accessible": "yes"
+          }
+        ]
+      },
+      "query": {
+        "walking_limits": {
+          "access_seconds": 600,
+          "egress_seconds": 600,
+          "transfer_seconds": 900,
+          "direct_seconds": 900
+        },
+        "id": "egress_hidden_alternative",
+        "origin": "S",
+        "destination": "T",
+        "departure": 26100,
+        "latest_arrival": 29700,
+        "transfer_buffer": 0,
+        "max_walk_seconds": 3900,
+        "max_boardings": 4,
+        "max_legs": 1024,
+        "accessible_only": false
+      },
+      "expected_raw_refs": [
+        [
+          "fast",
+          "egress"
+        ]
+      ],
+      "expected_raw_points": [
+        {
+          "arrival": 26901,
+          "boardings": 1
+        }
+      ],
+      "expected_feasible_refs": [
+        [
+          "feasible"
+        ]
+      ],
+      "expected_feasible_points": [
+        {
+          "arrival": 27000,
+          "boardings": 1
+        }
+      ],
+      "expected_certificate_accepted": false
+    },
+    {
+      "name": "direct_hidden_alternative",
+      "levels": 0,
+      "dataset": {
+        "window": {
+          "start": 25200,
+          "end": 32400
+        },
+        "data_kind": "synthetic-minimal-certificate-reproducer",
+        "schema_version": "0.2",
+        "id": "synthetic:trex-cap:direct_hidden_alternative",
+        "time_zone": "Asia/Singapore",
+        "service_date": "2026-10-16",
+        "stops": [
+          {
+            "id": "S",
+            "accessible": "yes"
+          },
+          {
+            "id": "T",
+            "accessible": "yes"
+          }
+        ],
+        "trips": [
+          {
+            "id": "feasible",
+            "accessible": "yes"
+          }
+        ],
+        "connections": [
+          {
+            "id": "feasible",
+            "trip_id": "feasible",
+            "sequence": 0,
+            "from": "S",
+            "to": "T",
+            "departure": 26200,
+            "arrival": 27100,
+            "pickup": true,
+            "dropoff": true
+          }
+        ],
+        "footpaths": [
+          {
+            "id": "direct",
+            "from": "S",
+            "to": "T",
+            "duration": 901,
+            "accessible": "yes"
+          }
+        ]
+      },
+      "query": {
+        "walking_limits": {
+          "access_seconds": 600,
+          "egress_seconds": 600,
+          "transfer_seconds": 900,
+          "direct_seconds": 900
+        },
+        "id": "direct_hidden_alternative",
+        "origin": "S",
+        "destination": "T",
+        "departure": 26100,
+        "latest_arrival": 29700,
+        "transfer_buffer": 0,
+        "max_walk_seconds": 3900,
+        "max_boardings": 4,
+        "max_legs": 1024,
+        "accessible_only": false
+      },
+      "expected_raw_refs": [
+        [
+          "direct"
+        ]
+      ],
+      "expected_raw_points": [
+        {
+          "arrival": 27001,
+          "boardings": 0
+        }
+      ],
+      "expected_feasible_refs": [
+        [
+          "feasible"
+        ]
+      ],
+      "expected_feasible_points": [
+        {
+          "arrival": 27100,
+          "boardings": 1
+        }
+      ],
+      "expected_certificate_accepted": false
+    },
+    {
+      "name": "transfer_hidden_alternative",
+      "levels": 1,
+      "dataset": {
+        "window": {
+          "start": 25200,
+          "end": 32400
+        },
+        "data_kind": "synthetic-minimal-certificate-reproducer",
+        "schema_version": "0.2",
+        "id": "synthetic:trex-cap:transfer_hidden_alternative",
+        "time_zone": "Asia/Singapore",
+        "service_date": "2026-10-16",
+        "stops": [
+          {
+            "id": "S",
+            "accessible": "yes"
+          },
+          {
+            "id": "A",
+            "accessible": "yes"
+          },
+          {
+            "id": "B",
+            "accessible": "yes"
+          },
+          {
+            "id": "C",
+            "accessible": "yes"
+          },
+          {
+            "id": "T",
+            "accessible": "yes"
+          }
+        ],
+        "trips": [
+          {
+            "id": "first",
+            "accessible": "yes"
+          },
+          {
+            "id": "fast",
+            "accessible": "yes"
+          },
+          {
+            "id": "feasible",
+            "accessible": "yes"
+          }
+        ],
+        "connections": [
+          {
+            "id": "first",
+            "trip_id": "first",
+            "sequence": 0,
+            "from": "S",
+            "to": "A",
+            "departure": 26200,
+            "arrival": 26300,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "fast",
+            "trip_id": "fast",
+            "sequence": 0,
+            "from": "B",
+            "to": "T",
+            "departure": 27300,
+            "arrival": 27400,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "feasible",
+            "trip_id": "feasible",
+            "sequence": 0,
+            "from": "C",
+            "to": "T",
+            "departure": 27300,
+            "arrival": 27500,
+            "pickup": true,
+            "dropoff": true
+          }
+        ],
+        "footpaths": [
+          {
+            "id": "long-transfer",
+            "from": "A",
+            "to": "B",
+            "duration": 901,
+            "accessible": "yes"
+          },
+          {
+            "id": "legal-transfer",
+            "from": "A",
+            "to": "C",
+            "duration": 900,
+            "accessible": "yes"
+          }
+        ]
+      },
+      "query": {
+        "walking_limits": {
+          "access_seconds": 600,
+          "egress_seconds": 600,
+          "transfer_seconds": 900,
+          "direct_seconds": 900
+        },
+        "id": "transfer_hidden_alternative",
+        "origin": "S",
+        "destination": "T",
+        "departure": 26100,
+        "latest_arrival": 29700,
+        "transfer_buffer": 0,
+        "max_walk_seconds": 3900,
+        "max_boardings": 4,
+        "max_legs": 1024,
+        "accessible_only": false
+      },
+      "expected_raw_refs": [
+        [
+          "first",
+          "long-transfer",
+          "fast"
+        ]
+      ],
+      "expected_raw_points": [
+        {
+          "arrival": 27400,
+          "boardings": 2
+        }
+      ],
+      "expected_feasible_refs": [
+        [
+          "first",
+          "legal-transfer",
+          "feasible"
+        ]
+      ],
+      "expected_feasible_points": [
+        {
+          "arrival": 27500,
+          "boardings": 2
+        }
+      ],
+      "expected_certificate_accepted": false
+    },
+    {
+      "name": "accepted_without_walking",
+      "levels": 1,
+      "dataset": {
+        "window": {
+          "start": 25200,
+          "end": 32400
+        },
+        "data_kind": "synthetic-minimal-certificate-reproducer",
+        "schema_version": "0.2",
+        "id": "synthetic:trex-cap:accepted_without_walking",
+        "time_zone": "Asia/Singapore",
+        "service_date": "2026-10-16",
+        "stops": [
+          {
+            "id": "Z",
+            "accessible": "yes"
+          },
+          {
+            "id": "T",
+            "accessible": "yes"
+          }
+        ],
+        "trips": [
+          {
+            "id": "feasible",
+            "accessible": "yes"
+          }
+        ],
+        "connections": [
+          {
+            "id": "feasible",
+            "trip_id": "feasible",
+            "sequence": 0,
+            "from": "Z",
+            "to": "T",
+            "departure": 26200,
+            "arrival": 26400,
+            "pickup": true,
+            "dropoff": true
+          }
+        ],
+        "footpaths": null
+      },
+      "query": {
+        "walking_limits": {
+          "access_seconds": 0,
+          "egress_seconds": 0,
+          "transfer_seconds": 900,
+          "direct_seconds": 0
+        },
+        "id": "accepted_without_walking",
+        "origin": "Z",
+        "destination": "T",
+        "departure": 26100,
+        "latest_arrival": 29700,
+        "transfer_buffer": 0,
+        "max_walk_seconds": 900,
+        "max_boardings": 2,
+        "max_legs": 1024,
+        "accessible_only": false
+      },
+      "expected_raw_refs": [
+        [
+          "feasible"
+        ]
+      ],
+      "expected_raw_points": [
+        {
+          "arrival": 26400,
+          "boardings": 1
+        }
+      ],
+      "expected_feasible_refs": [
+        [
+          "feasible"
+        ]
+      ],
+      "expected_feasible_points": [
+        {
+          "arrival": 26400,
+          "boardings": 1
+        }
+      ],
+      "expected_certificate_accepted": true
+    }
+  ]
+}

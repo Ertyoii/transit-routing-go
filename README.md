@@ -43,4 +43,4 @@ curl http://127.0.0.1:8080/v1/snapshot
 
 Use the returned snapshot ID with `/v1/route`, `/v1/duration`, `/v1/batch` or `/v1/matrix`. The service defaults to localhost and provides no authentication; no service starts automatically.
 
-No real-data performance results or source datasets are bundled. A future result must bind its code revision, licensed input bytes, objective, workload, resource limits, full witnesses and measurement protocol.
+Read the [checkpoint changes](docs/RESEARCH_CHECKPOINT.md) and [capability limits](docs/SCOPE.md), especially unresolved T-REX candidate coverage and TP full-preparation limits. The benchmark project carries aggregate historical results. Source datasets and real query/itinerary payloads are excluded; the final composition is not a new full-model timing run.

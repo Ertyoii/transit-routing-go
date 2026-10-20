@@ -221,11 +221,11 @@ func (d Dataset) Validate() error {
 	return nil
 }
 
-func (q Query) Validate(d Dataset) error {
+func (q Query) validateBounds(window *TimeWindow) error {
 	if q.ID == "" || q.Departure < 0 || q.LatestArrival < q.Departure || q.LatestArrival > MaxServiceSecond || q.TransferBuffer < 0 || q.TransferBuffer > MaxServiceSecond || q.MaxWalkSeconds < 0 || q.MaxWalkSeconds > MaxServiceSecond || q.MaxBoardings < 0 || q.MaxLegs < 0 || q.MaxLegs > 1024 || q.MaxBoardings > q.MaxLegs {
 		return fmt.Errorf("invalid query %q bounds (max legs <=1024)", q.ID)
 	}
-	if d.Window != nil && (q.Departure < d.Window.Start || q.LatestArrival > d.Window.End) {
+	if window != nil && (q.Departure < window.Start || q.LatestArrival > window.End) {
 		return fmt.Errorf("query extends beyond normalized snapshot window")
 	}
 	if q.Walking != nil {
@@ -234,6 +234,13 @@ func (q Query) Validate(d Dataset) error {
 				return fmt.Errorf("invalid separated walking resource")
 			}
 		}
+	}
+	return nil
+}
+
+func (q Query) Validate(d Dataset) error {
+	if err := q.validateBounds(d.Window); err != nil {
+		return err
 	}
 	var origin, destination bool
 	for _, s := range d.Stops {

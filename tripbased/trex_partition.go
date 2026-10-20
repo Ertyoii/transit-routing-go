@@ -186,6 +186,15 @@ func (x *TREXIndex) buildTREXOverlays(ctx context.Context) error {
 	n := x.offsets[len(x.offsets)-1]
 	for level := 0; level <= x.cfg.Levels; level++ {
 		o := trexOverlay{starts: make([]int, n+1)}
+		if x.cfg.ExactStorage {
+			count, e := x.exactOverlayCapacity(ctx, level)
+			if e != nil {
+				return e
+			}
+			if count > 0 {
+				o.edges = make([]int, 0, count)
+			}
+		}
 		for ti, t := range x.base.trips {
 			for i := range t.cs {
 				event := x.offsets[ti] + i
@@ -194,9 +203,12 @@ func (x *TREXIndex) buildTREXOverlays(ctx context.Context) error {
 					if e := x.tick(ctx); e != nil {
 						return e
 					}
-					if x.snap.Transfers[id].Rank >= level {
+					if int(x.ranks[id]) >= level {
 						if x.snap.Stats.OverlayEntries == x.cfg.Limits.MaxOverlayEntries {
 							return fmt.Errorf("T-REX incomplete: overlay entry budget exhausted")
+						}
+						if x.cfg.ExactStorage && len(o.edges) == cap(o.edges) {
+							return fmt.Errorf("T-REX internal: exact overlay count/fill mismatch")
 						}
 						o.edges = append(o.edges, id)
 						x.snap.Stats.OverlayEntries++
@@ -205,6 +217,10 @@ func (x *TREXIndex) buildTREXOverlays(ctx context.Context) error {
 			}
 		}
 		o.starts[n] = len(o.edges)
+		if x.cfg.ExactStorage && len(o.edges) != cap(o.edges) {
+			return fmt.Errorf("T-REX internal: exact overlay count/fill mismatch")
+		}
+		x.snap.Stats.Storage.OverlayCapacity += cap(o.edges)
 		x.overlays = append(x.overlays, o)
 		succ := make([]int, n)
 		for ti, t := range x.base.trips {

@@ -29,24 +29,27 @@ type TREXLimits struct {
 	MaxQueryWork      int `json:"max_query_work"`
 }
 type TREXConfig struct {
+	ExactStorage bool           `json:"exact_storage,omitempty"`
 	Levels       int            `json:"levels"`
 	MaxBoardings int            `json:"max_boardings"`
 	Partition    map[string]int `json:"partition,omitempty"`
 	Limits       TREXLimits     `json:"limits"`
 }
 type TREXStats struct {
-	Work               int   `json:"work"`
-	ClosurePaths       int   `json:"closure_paths"`
-	WalkSettled        int   `json:"walk_settled"`
-	Transfers          int   `json:"transfers"`
-	SameLineDiscarded  int   `json:"same_line_discarded"`
-	EventRuns          int   `json:"event_runs"`
-	QueuedSegments     int   `json:"queued_segments"`
-	RankPromotions     int   `json:"rank_promotions"`
-	RedundantWitnesses int   `json:"redundant_witnesses_avoided"`
-	Traversals         int   `json:"traversals"`
-	OverlayEntries     int   `json:"overlay_entries"`
-	Ranks              []int `json:"rank_distribution"`
+	Storage            TREXStorageWork `json:"storage"`
+	Levels             []TREXLevelWork `json:"levels,omitempty"`
+	Work               int             `json:"work"`
+	ClosurePaths       int             `json:"closure_paths"`
+	WalkSettled        int             `json:"walk_settled"`
+	Transfers          int             `json:"transfers"`
+	SameLineDiscarded  int             `json:"same_line_discarded"`
+	EventRuns          int             `json:"event_runs"`
+	QueuedSegments     int             `json:"queued_segments"`
+	RankPromotions     int             `json:"rank_promotions"`
+	RedundantWitnesses int             `json:"redundant_witnesses_avoided"`
+	Traversals         int             `json:"traversals"`
+	OverlayEntries     int             `json:"overlay_entries"`
+	Ranks              []int           `json:"rank_distribution"`
 }
 type TREXTransfer struct {
 	FromTrip    string   `json:"from_trip"`
@@ -101,25 +104,38 @@ type trexEdge struct {
 }
 type trexOverlay struct{ starts, edges []int }
 type TREXIndex struct {
-	transferWalkLimit *int64 // only the separate unranked capped-walking builder sets this
-	base              *Index
-	cfg               TREXConfig
-	snap              TREXSnapshot
-	names             []string
-	ids               map[string]int
-	walks             [][]paper.Path
-	walkMap           []map[int]*paper.Path
-	cells, offsets    []int
-	edges             []trexEdge
-	byEvent           [][][]int
-	overlays          []trexOverlay
-	successors        [][]int
+	staticRulesCandidate bool   // opt-in qualification profile; legacy BuildTREX stays strict
+	transferWalkLimit    *int64 // only the separate unranked capped-walking builder sets this
+	base                 *Index
+	cfg                  TREXConfig
+	proofs               trexProofStore
+	snap                 TREXSnapshot
+	names                []string
+	ids                  map[string]int
+	walks                [][]paper.Path
+	walkMap              []map[int]*paper.Path
+	cells, offsets       []int
+	edges                []trexEdge
+	ranks                []uint8 // levels are bounded by 12; verbose metadata is reconstructed on demand
+	byEvent              [][][]int
+	overlays             []trexOverlay
+	successors           [][]int
 }
 
 func (x *TREXIndex) Complete() bool { return x != nil && x.snap.Complete }
 func (x *TREXIndex) Snapshot() TREXSnapshot {
 	// Diagnostic serialization deliberately owns every nested collection.
-	b, _ := json.Marshal(x.snap)
+	view := x.snap
+	view.Witnesses = x.expandTREXProofs()
+	view.Transfers = make([]TREXTransfer, len(x.edges))
+	for id, e := range x.edges {
+		raw := make([]string, len(e.walk.Edges))
+		for j, w := range e.walk.Edges {
+			raw[j] = w.ID
+		}
+		view.Transfers[id] = TREXTransfer{FromTrip: x.base.trips[e.from].id, Exit: e.exit + 1, ToTrip: x.base.trips[e.to].id, Board: e.board, WalkSeconds: e.walk.Duration, RawEdges: raw, Rank: int(x.ranks[id])}
+	}
+	b, _ := json.Marshal(view)
 	var s TREXSnapshot
 	_ = json.Unmarshal(b, &s)
 	return s
@@ -148,13 +164,28 @@ func BuildTREX(ctx context.Context, d model.Dataset, cfg TREXConfig) (*TREXIndex
 	return buildTREX(ctx, d, cfg, nil)
 }
 
-func buildTREX(ctx context.Context, d model.Dataset, cfg TREXConfig, transferWalkLimit *int64) (x *TREXIndex, err error) {
+// BuildTREXStaticRulesCandidate is an opt-in qualification extension for static
+// type-2/type-3 stop-pair rules and pickup/dropoff restrictions. It retains all
+// ranked walking/resource guards; it is not a capped-walking T-REX certificate.
+// The original paper's unrestricted-event proof is not claimed for this profile.
+func BuildTREXStaticRulesCandidate(ctx context.Context, d model.Dataset, cfg TREXConfig) (*TREXIndex, error) {
+	return buildTREXPolicy(ctx, d, cfg, nil, true)
+}
+
+func buildTREX(ctx context.Context, d model.Dataset, cfg TREXConfig, transferWalkLimit *int64) (*TREXIndex, error) {
+	return buildTREXPolicy(ctx, d, cfg, transferWalkLimit, false)
+}
+
+func buildTREXPolicy(ctx context.Context, d model.Dataset, cfg TREXConfig, transferWalkLimit *int64, staticRulesCandidate bool) (x *TREXIndex, err error) {
 	part := map[string]int{}
 	for k, v := range cfg.Partition {
 		part[k] = v
 	}
 	cfg.Partition = part
-	x = &TREXIndex{transferWalkLimit: transferWalkLimit, cfg: cfg, ids: map[string]int{}, snap: TREXSnapshot{Profile: "trex_positive_static_transitive_nonbinding_v1", Config: cfg, Transfers: []TREXTransfer{}, Witnesses: []TREXWitness{}, Phases: map[string]TREXPhase{}}}
+	x = &TREXIndex{staticRulesCandidate: staticRulesCandidate, transferWalkLimit: transferWalkLimit, cfg: cfg, ids: map[string]int{}, snap: TREXSnapshot{Profile: "trex_positive_static_transitive_nonbinding_v1", Config: cfg, Transfers: []TREXTransfer{}, Witnesses: []TREXWitness{}, Phases: map[string]TREXPhase{}}}
+	if staticRulesCandidate {
+		x.snap.Profile = "trex_static_stop_pair_nonbinding_candidate_v1"
+	}
 	defer func() {
 		x.snap.Complete = err == nil
 		if err != nil {
@@ -177,14 +208,21 @@ func buildTREX(ctx context.Context, d model.Dataset, cfg TREXConfig, transferWal
 		if e := d.Validate(); e != nil {
 			return e
 		}
-		if len(d.Transfers) > 0 {
+		if !staticRulesCandidate && len(d.Transfers) > 0 {
 			return fmt.Errorf("T-REX capability: GTFS transfer rules unsupported")
+		}
+		if staticRulesCandidate {
+			for _, r := range d.Transfers {
+				if r.Type != 2 && r.Type != 3 || r.FromTrip != "" || r.ToTrip != "" || r.FromRoute != "" || r.ToRoute != "" {
+					return fmt.Errorf("T-REX candidate capability: only static type-2/type-3 stop-pair rules supported")
+				}
+			}
 		}
 		for _, c := range d.Connections {
 			if e := x.tick(ctx); e != nil {
 				return e
 			}
-			if !c.Pickup || !c.Dropoff || c.Arrival <= c.Departure || c.From == c.To {
+			if !staticRulesCandidate && (!c.Pickup || !c.Dropoff) || c.Arrival <= c.Departure || c.From == c.To {
 				return fmt.Errorf("T-REX capability: positive unrestricted non-self rides required")
 			}
 		}
@@ -250,19 +288,18 @@ func buildTREX(ctx context.Context, d model.Dataset, cfg TREXConfig, transferWal
 		return
 	}
 	x.snap.Stats.Ranks = make([]int, cfg.Levels+1)
-	for _, e := range x.snap.Transfers {
-		x.snap.Stats.Ranks[e.Rank]++
+	for _, rank := range x.ranks {
+		x.snap.Stats.Ranks[rank]++
 	}
 	return
 }
 
-func (x *TREXIndex) buildTREXTransfers(ctx context.Context) error {
-	x.byEvent = make([][][]int, len(x.base.trips))
-	x.offsets = make([]int, len(x.base.trips)+1)
+func (x *TREXIndex) scanTREXTransfers(ctx context.Context, emit func(int, int, int, int, *paper.Path) error) error {
 	for ti, t := range x.base.trips {
-		x.offsets[ti+1] = x.offsets[ti] + len(t.cs)
-		x.byEvent[ti] = make([][]int, len(t.cs))
 		for i, c := range t.cs {
+			if !c.Dropoff {
+				continue
+			}
 			for wi := range x.walks[x.ids[c.To]] {
 				p := &x.walks[x.ids[c.To]][wi]
 				if x.transferWalkLimit != nil {
@@ -273,18 +310,36 @@ func (x *TREXIndex) buildTREXTransfers(ctx context.Context) error {
 						continue
 					}
 				}
+				ready := c.Arrival + p.Duration
+				if x.staticRulesCandidate {
+					if e := x.tick(ctx); e != nil {
+						return e
+					}
+					var allowed bool
+					var e error
+					ready, allowed, e = x.base.p.ReadyTime(model.Query{}, c.To, p.To, c.Arrival, p.Duration)
+					if e != nil {
+						return e
+					}
+					if !allowed {
+						continue
+					}
+				}
 				for _, o := range x.base.at[p.To] {
 					if e := x.tick(ctx); e != nil {
 						return e
 					}
 					line := x.base.lines[o.line]
+					if !x.base.trips[line.trips[0]].cs[o.position].Pickup {
+						continue
+					}
 					lo, hi := 0, len(line.trips)
 					for lo < hi {
 						if e := x.tick(ctx); e != nil {
 							return e
 						}
 						m := (lo + hi) / 2
-						if x.base.trips[line.trips[m]].cs[o.position].Departure < c.Arrival+p.Duration {
+						if x.base.trips[line.trips[m]].cs[o.position].Departure < ready {
 							lo = m + 1
 						} else {
 							hi = m
@@ -298,18 +353,9 @@ func (x *TREXIndex) buildTREXTransfers(ctx context.Context) error {
 						x.snap.Stats.SameLineDiscarded++
 						continue
 					}
-					if len(x.edges) >= x.cfg.Limits.MaxTransfers {
-						return fmt.Errorf("T-REX incomplete: transfer budget exhausted")
+					if e := emit(ti, i, to, o.position, p); e != nil {
+						return e
 					}
-					id := len(x.edges)
-					x.edges = append(x.edges, trexEdge{ti, i, to, o.position, p})
-					x.byEvent[ti][i] = append(x.byEvent[ti][i], id)
-					raw := []string{}
-					for _, e := range p.Edges {
-						raw = append(raw, e.ID)
-					}
-					x.snap.Transfers = append(x.snap.Transfers, TREXTransfer{FromTrip: t.id, Exit: i + 1, ToTrip: x.base.trips[to].id, Board: o.position, WalkSeconds: p.Duration, RawEdges: raw})
-					x.snap.Stats.Transfers++
 				}
 			}
 		}

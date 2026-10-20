@@ -63,6 +63,15 @@ type patternState struct {
 }
 type patternRide struct{ trip, board, exit int }
 
+type patternRuleContext struct {
+	alight int
+	time   int64
+}
+type patternRuleState struct {
+	patternState
+	alight int
+}
+
 // A direct edge is evaluated against every common FIFO line and all occurrences.
 // The incidence intersection is independent of the precomputed pattern witnesses.
 func (x *PatternIndex) direct(from, to int, ready int64, s *PatternQueryStats, tick func() error) (patternRide, bool, error) {
@@ -108,6 +117,10 @@ func (x *PatternIndex) directIncidence(from, to int, ready int64, s *PatternQuer
 				if u.pos >= v.pos {
 					continue
 				}
+				prototype := x.base.cp.trips[line.trips[0]].cs
+				if !prototype[u.pos].Pickup || !prototype[v.pos-1].Dropoff {
+					continue
+				}
 				s.LinePairs++
 				lo, hi := 0, len(line.trips)
 				for lo < hi {
@@ -140,6 +153,12 @@ func (x *PatternIndex) Search(ctx context.Context, input model.Query) (PatternRe
 	return x.searchGraph(ctx, input, nil)
 }
 func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assemble func(model.Query, map[PatternEdge]bool, *PatternQueryStats, func() error) error) (out PatternResult, err error) {
+	return x.searchGraphChecked(ctx, input, assemble, nil)
+}
+
+// The optional checker belongs only to an explicitly scoped experimental
+// wrapper. Ordinary and scalable TP retain their original capability checks.
+func (x *PatternIndex) searchGraphChecked(ctx context.Context, input model.Query, assemble func(model.Query, map[PatternEdge]bool, *PatternQueryStats, func() error) error, checker func(context.Context, model.Query) (model.Query, error)) (out PatternResult, err error) {
 	out.Journeys = []model.Journey{}
 	out.Graph = []PatternEdge{}
 	defer func() {
@@ -156,7 +175,10 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 		err = fmt.Errorf("Transfer Patterns incomplete index cannot answer queries")
 		return
 	}
-	q, e := x.base.checkQuery(ctx, input)
+	if checker == nil {
+		checker = x.base.checkQuery
+	}
+	q, e := checker(ctx, input)
 	if e != nil {
 		err = e
 		return
@@ -211,10 +233,25 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 		adj[sid] = append(adj[sid], edge)
 	}
 	origin, target := x.base.ids[q.Origin], x.base.ids[q.Destination]
-	labels := map[patternState]*patternLabel{}
+	ruleMode := x.base.cfg.Semantics == "static_stop_pair_v1"
+	contexts := map[*patternLabel]patternRuleContext{}
+	stateKey := func(stop, boards int, walked bool, tc patternRuleContext) patternRuleState {
+		alight := -1
+		if ruleMode {
+			alight = tc.alight
+		}
+		return patternRuleState{patternState{stop, boards, walked}, alight}
+	}
+	contextOf := func(l *patternLabel) patternRuleContext {
+		if ruleMode {
+			return contexts[l]
+		}
+		return patternRuleContext{alight: -1}
+	}
+	labels := map[patternRuleState]*patternLabel{}
 	queue := &patternQueue{}
 	heap.Init(queue)
-	merge := func(s, boards int, walked bool, at int64, parent *paper.Node) error {
+	merge := func(s, boards int, walked bool, at int64, parent *paper.Node, tc patternRuleContext) error {
 		if e := tick(); e != nil {
 			return e
 		}
@@ -223,7 +260,7 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 		}
 		// Mode-specific labels preserve the alternating walking/vehicle graph.
 		for b := 0; b <= boards; b++ {
-			if old := labels[patternState{s, b, walked}]; old != nil && old.at <= at {
+			if old := labels[stateKey(s, b, walked, tc)]; old != nil && old.at <= at {
 				return nil
 			}
 		}
@@ -232,11 +269,14 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 		}
 		l := &patternLabel{s, boards, walked, at, parent, out.Stats.Labels}
 		out.Stats.Labels++
-		labels[patternState{s, boards, walked}] = l
+		labels[stateKey(s, boards, walked, tc)] = l
+		if ruleMode {
+			contexts[l] = tc
+		}
 		heap.Push(queue, l)
 		return nil
 	}
-	if err = merge(origin, 0, false, q.Departure, nil); err != nil {
+	if err = merge(origin, 0, false, q.Departure, nil, patternRuleContext{alight: -1}); err != nil {
 		return
 	}
 	for queue.Len() > 0 {
@@ -244,12 +284,12 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 			return
 		}
 		l := heap.Pop(queue).(*patternLabel)
-		if labels[patternState{l.stop, l.boards, l.walked}] != l {
+		if labels[stateKey(l.stop, l.boards, l.walked, contextOf(l))] != l {
 			continue
 		}
 		dominated := false
 		for b := 0; b < l.boards; b++ {
-			if old := labels[patternState{l.stop, b, l.walked}]; old != nil && old.at <= l.at {
+			if old := labels[stateKey(l.stop, b, l.walked, contextOf(l))]; old != nil && old.at <= l.at {
 				dominated = true
 				break
 			}
@@ -264,6 +304,7 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 			}
 			v := x.base.ids[edge.To]
 			parent := l.parent
+			tc := contextOf(l)
 			at := l.at
 			boards := l.boards
 			walked := edge.Kind == "walk"
@@ -306,7 +347,18 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 				if boards == q.MaxBoardings {
 					continue
 				}
-				r, ok, e := x.direct(l.stop, v, at, &out.Stats, tick)
+				ready := at
+				if ruleMode && l.boards > 0 {
+					var allowed bool
+					ready, allowed, err = x.base.cp.p.ReadyTime(q, x.base.names[tc.alight], x.base.names[l.stop], tc.time, at-tc.time)
+					if err != nil {
+						return
+					}
+					if !allowed {
+						continue
+					}
+				}
+				r, ok, e := x.direct(l.stop, v, ready, &out.Stats, tick)
 				if e != nil {
 					err = e
 					return
@@ -322,13 +374,16 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 					out.Stats.RawLegs++
 					parent = paper.Ride(parent, c)
 					at = c.Arrival
-					if c.To == q.Destination {
+					if c.To == q.Destination && c.Dropoff {
 						v = target
 						break
 					}
 				}
 			}
-			if err = merge(v, boards, walked, at, parent); err != nil {
+			if !walked {
+				tc = patternRuleContext{alight: v, time: at}
+			}
+			if err = merge(v, boards, walked, at, parent, tc); err != nil {
 				return
 			}
 		}
