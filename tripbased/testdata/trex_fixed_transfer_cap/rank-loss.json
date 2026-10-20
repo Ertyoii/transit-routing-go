@@ -1,0 +1,133 @@
+{
+  "license": "CC0-1.0",
+  "dataset": {
+    "schema_version": "0.2",
+    "id": "literal-ranked-cap-901",
+    "time_zone": "Asia/Singapore",
+    "service_date": "2026-10-16",
+    "window": {
+      "start": 0,
+      "end": 2000
+    },
+    "stops": [
+      {
+        "id": "S",
+        "accessible": "yes"
+      },
+      {
+        "id": "B",
+        "accessible": "yes"
+      },
+      {
+        "id": "C",
+        "accessible": "yes"
+      },
+      {
+        "id": "T",
+        "accessible": "yes"
+      }
+    ],
+    "trips": [
+      {
+        "id": "t0",
+        "accessible": "yes"
+      },
+      {
+        "id": "t1",
+        "accessible": "yes"
+      },
+      {
+        "id": "t2",
+        "accessible": "yes"
+      }
+    ],
+    "connections": [
+      {
+        "id": "sb",
+        "trip_id": "t0",
+        "sequence": 0,
+        "from": "S",
+        "to": "B",
+        "departure": 10,
+        "arrival": 20,
+        "pickup": true,
+        "dropoff": true
+      },
+      {
+        "id": "bc",
+        "trip_id": "t1",
+        "sequence": 0,
+        "from": "B",
+        "to": "C",
+        "departure": 30,
+        "arrival": 40,
+        "pickup": true,
+        "dropoff": true
+      },
+      {
+        "id": "ct",
+        "trip_id": "t2",
+        "sequence": 0,
+        "from": "C",
+        "to": "T",
+        "departure": 1000,
+        "arrival": 1100,
+        "pickup": true,
+        "dropoff": true
+      }
+    ],
+    "footpaths": [
+      {
+        "id": "wbc",
+        "from": "B",
+        "to": "C",
+        "duration": 901,
+        "accessible": "yes"
+      }
+    ]
+  },
+  "query": {
+    "id": "literal-transfer900",
+    "origin": "S",
+    "destination": "T",
+    "departure": 0,
+    "latest_arrival": 2000,
+    "max_boardings": 3,
+    "max_legs": 1024,
+    "max_walk_seconds": 1800,
+    "walking_limits": {
+      "access_seconds": 0,
+      "direct_seconds": 0,
+      "egress_seconds": 0,
+      "transfer_seconds": 900
+    }
+  },
+  "expected": {
+    "legs": [
+      {
+        "kind": "ride",
+        "ref": "sb",
+        "departure": 10,
+        "arrival": 20
+      },
+      {
+        "kind": "ride",
+        "ref": "bc",
+        "departure": 30,
+        "arrival": 40
+      },
+      {
+        "kind": "ride",
+        "ref": "ct",
+        "departure": 1000,
+        "arrival": 1100
+      }
+    ]
+  },
+  "partition": {
+    "S": 0,
+    "T": 0,
+    "B": 1,
+    "C": 1
+  }
+}

@@ -1,767 +1,385 @@
 {
-  "baseline_commit": "76cd3c946f41052623d7140b9832518e74bd7e6c",
+  "baseline_commit": "89c5217d6d317b43d0060c641802cb154f75d404",
+  "scope": "Exact accepted Go implementation, source-test and synthetic-fixture changes over the published public baseline; byte-for-byte clean-source composition; no new runtime transform or performance/quality result. Current map excludes itself from documentation hashes to avoid self-reference.",
   "changed_files": [
     {
-      "path": "internal/capverify/enumerate.go",
-      "source_sha256": "0183f70415f38945806e88f0a0ee5f86f8fe7794a33d39f9dc84debbd4d771ef",
+      "path": "internal/capverify/prepared.go",
+      "source_sha256": "b8cc466e7a30faa55d910e37f99ca3122c00897674b06c3dc57852bcc1d8514c",
       "baseline_sha256": null,
-      "output_sha256": "a5b79d48444815f6042b592bd8aac0adce8a732bc10a676d923491155736b40c",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/internal/capverify/enumerate.go"
+      "output_sha256": "b8cc466e7a30faa55d910e37f99ca3122c00897674b06c3dc57852bcc1d8514c",
+      "reason": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate-v2/internal/capverify/prepared.go",
+      "source_pin_record": "non-csa-v2-trex-shadow-reporting-source"
     },
     {
-      "path": "internal/capverify/frontier.go",
-      "source_sha256": "c24eff2db653ebe230714f1a6dd7133f8a7ac2df0e0005695d13fbea296cf373",
+      "path": "internal/capverify/prepared_enumerate.go",
+      "source_sha256": "0f8804ea88d2c4c29e51486ca83e9885eea86974715ff5847d4fbc37af8956d5",
       "baseline_sha256": null,
-      "output_sha256": "d381db7923af16899a3454be5e1440c306f5eb8e4c13f93c3e7e0d31cd45202f",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/internal/capverify/frontier.go"
+      "output_sha256": "0f8804ea88d2c4c29e51486ca83e9885eea86974715ff5847d4fbc37af8956d5",
+      "reason": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate-v2/internal/capverify/prepared_enumerate.go",
+      "source_pin_record": "non-csa-v2-trex-shadow-reporting-source"
     },
     {
-      "path": "internal/capverify/frontier_test.go",
-      "source_sha256": "9a416d7aecc42c194200fe4b510f97483e3b7e60599c4a5c1a45a4c3bb257049",
+      "path": "internal/capverify/prepared_test.go",
+      "source_sha256": "b83981a51651d559f32cac6be3861cab6f684e89f6172d252fd96865ebac5a91",
       "baseline_sha256": null,
-      "output_sha256": "43f37426ce820e71d1dde171cbd5b3714fd0dc4b59fb122f00c6d4d39c2565fb",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/internal/capverify/frontier_test.go"
+      "output_sha256": "b83981a51651d559f32cac6be3861cab6f684e89f6172d252fd96865ebac5a91",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/internal/capverify/prepared_test.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "model/model.go",
-      "source_sha256": "ff1ad33cb87e072171d4a4844d89b0e159773dacf9dd85b6c17979c5809f6a7d",
-      "baseline_sha256": "c97a1324408826746d5c056b7ca4225f181bfb41d806182e7e1422da36481482",
-      "output_sha256": "ff1ad33cb87e072171d4a4844d89b0e159773dacf9dd85b6c17979c5809f6a7d",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/model/model.go"
-    },
-    {
-      "path": "model/query_validator.go",
-      "source_sha256": "a05147dc2d502100e4f9e8b90f9ec29742cffa6fb0f3ba846634c1b089810213",
+      "path": "internal/capverify/shadow.go",
+      "source_sha256": "affe1dff61ce1444e0055272d71bd569d66e71e3377a7bbb0d55104053261ac0",
       "baseline_sha256": null,
-      "output_sha256": "a05147dc2d502100e4f9e8b90f9ec29742cffa6fb0f3ba846634c1b089810213",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/model/query_validator.go"
+      "output_sha256": "affe1dff61ce1444e0055272d71bd569d66e71e3377a7bbb0d55104053261ac0",
+      "reason": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate-v2/internal/capverify/shadow.go",
+      "source_pin_record": "non-csa-v2-trex-shadow-reporting-source"
     },
     {
-      "path": "raptor/dense_test.go",
-      "source_sha256": "34481ba7d00ae1477d3a44fc6c9dee74f0a5bd8544dee2d444d0a0f15db4b224",
+      "path": "internal/capverify/shadow_test.go",
+      "source_sha256": "3b1ff2841fdadfbb8b87b140c318382dc916c37986f8c4a719dced393f72ad84",
       "baseline_sha256": null,
-      "output_sha256": "f4ce2026818ca7cb57632db7c72da54ab3f97b7db71173efc463096402e2161b",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/raptor/dense_test.go"
-    },
-    {
-      "path": "raptor/frozen_reference_test.go",
-      "source_sha256": "a34917bf860acfbb8a329030fc6da987767c6d5824c119d4c1f58de549dd01ca",
-      "baseline_sha256": null,
-      "output_sha256": "e458a1933b470d0f9aed64fabed3f1f293c9c5cbb6fe7461c9f6ee925c1fd55c",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/raptor/frozen_reference_test.go"
-    },
-    {
-      "path": "raptor/multicriteria.go",
-      "source_sha256": "cd66de0bae7d0c66ad26ed7888783f4fdbbbc9666d0fc814466892ee9dc02266",
-      "baseline_sha256": "ada5f7ebd0b7e896b78f89337669e4154990ee12aed8823e8fa34c3cd3e0f70c",
-      "output_sha256": "ef138e2e6520fffa6344089dd29eea0016a221369c997f37e17a9945ce2d6b61",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/raptor/multicriteria.go"
-    },
-    {
-      "path": "raptor/raptor.go",
-      "source_sha256": "e5d94515346600863812d33d757e7f652ff06251d7d3d1ae8f4f6beaf3390fd9",
-      "baseline_sha256": "4562686853a54479e5f62228b1ee92d8d6309f05764e43933f360f53c94e4a8f",
-      "output_sha256": "86a73775704c8c34417f272f3d2298346a4cabc9f55cba25f4800a2d43668fd8",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/raptor/raptor.go"
-    },
-    {
-      "path": "raptor/round_queue.go",
-      "source_sha256": "3319c9839c727e512d7eef37a5d078c4c4438769dc7254622bac040bdf535a70",
-      "baseline_sha256": null,
-      "output_sha256": "3319c9839c727e512d7eef37a5d078c4c4438769dc7254622bac040bdf535a70",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/raptor/round_queue.go"
-    },
-    {
-      "path": "transfer/rules.go",
-      "source_sha256": "2d364fd5f14dde714e2dc354ede836c552f7de6599884b673d8c264bdfcb3ad2",
-      "baseline_sha256": "a404a4382a81a846b8090dd620b350ec744fd0a9716bdb094d89a5a743c661ec",
-      "output_sha256": "7cdd1b1fa67cdc27b6e16d00a51e52b5e8532dce3d35a1957b2e2da3b3e72172",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/transfer/rules.go"
+      "output_sha256": "3b1ff2841fdadfbb8b87b140c318382dc916c37986f8c4a719dced393f72ad84",
+      "reason": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate-v2/internal/capverify/shadow_test.go",
+      "source_pin_record": "non-csa-v2-trex-shadow-reporting-source"
     },
     {
       "path": "tripbased/capped_patterns.go",
-      "source_sha256": "945093fba59ce51dc5389fe599c57b2a5dfc0917ddfb54cf44e2edd34a33e8b8",
+      "source_sha256": "640b9cd381f4995d3591315d11a3860e18cb7f8cd89db68a5a0d9641cea83c71",
+      "baseline_sha256": "72b87059ef1b23e1e485ff0714dcade07a5accca2c4d31f39a7b77f62c1832c4",
+      "output_sha256": "640b9cd381f4995d3591315d11a3860e18cb7f8cd89db68a5a0d9641cea83c71",
+      "reason": "accepted clean retained origin-domain TP project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/tp/source/tripbased/capped_patterns.go",
+      "source_pin_record": "non-csa-v2-tp-origin-domain-source"
+    },
+    {
+      "path": "tripbased/capped_retained.go",
+      "source_sha256": "c05ebc389999a70546748f2e9aadd415e92b2af2b57b117ef8a6ab866acd5c9e",
       "baseline_sha256": null,
-      "output_sha256": "72b87059ef1b23e1e485ff0714dcade07a5accca2c4d31f39a7b77f62c1832c4",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/capped_patterns.go"
+      "output_sha256": "c05ebc389999a70546748f2e9aadd415e92b2af2b57b117ef8a6ab866acd5c9e",
+      "reason": "accepted clean retained origin-domain TP project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/tp/source/tripbased/capped_retained.go",
+      "source_pin_record": "non-csa-v2-tp-origin-domain-source"
     },
     {
-      "path": "tripbased/capped_patterns_oracle_test.go",
-      "source_sha256": "f58642d1fc11d15a586dd67363d5150689321f0107344e0e26298cb5f009e414",
+      "path": "tripbased/capped_retained_internal_test.go",
+      "source_sha256": "389198d995cff2a9063cc3b828e14d35dba6e41b424c527c7cddc853624b9c82",
       "baseline_sha256": null,
-      "output_sha256": "fc45789a64b950f693d631410b17725236a2aa8e1aa7aba570eb46749d7bf87c",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/capped_patterns_oracle_test.go"
+      "output_sha256": "389198d995cff2a9063cc3b828e14d35dba6e41b424c527c7cddc853624b9c82",
+      "reason": "accepted clean retained origin-domain TP project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/tp/source/tripbased/capped_retained_internal_test.go",
+      "source_pin_record": "non-csa-v2-tp-origin-domain-source"
     },
     {
-      "path": "tripbased/capped_patterns_test.go",
-      "source_sha256": "9fbca1c3d7e9f1c6213fc6c026eef96d47c47aa7b9b23427db8573dd0018a8f0",
+      "path": "tripbased/capped_retained_oracle_test.go",
+      "source_sha256": "990b0f00fbc05b7cdda40ca0e168e8e725dd2dd4499915c64f13f82f71f79d4a",
       "baseline_sha256": null,
-      "output_sha256": "059a07ce04e0b480d144ab98c5fd48f4f3a6d0b672b33ed6a5e218d0b8fb5baa",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/capped_patterns_test.go"
+      "output_sha256": "990b0f00fbc05b7cdda40ca0e168e8e725dd2dd4499915c64f13f82f71f79d4a",
+      "reason": "accepted clean retained origin-domain TP project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/tp/source/tripbased/capped_retained_oracle_test.go",
+      "source_pin_record": "non-csa-v2-tp-origin-domain-source"
     },
     {
-      "path": "tripbased/capped_profile_work_test.go",
-      "source_sha256": "72311d688e70fdfd92ba7c8151fd5bb03609437eab4e05b64a166fc9e9916481",
+      "path": "tripbased/capped_source_domain.go",
+      "source_sha256": "b65293af7afcc05e3c8fd6c25d07d4ee618d1e49e91ca53cf3a6b1c9757179f8",
       "baseline_sha256": null,
-      "output_sha256": "72311d688e70fdfd92ba7c8151fd5bb03609437eab4e05b64a166fc9e9916481",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/capped_profile_work_test.go"
+      "output_sha256": "b65293af7afcc05e3c8fd6c25d07d4ee618d1e49e91ca53cf3a6b1c9757179f8",
+      "reason": "accepted clean retained origin-domain TP project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/tp/source/tripbased/capped_source_domain.go",
+      "source_pin_record": "non-csa-v2-tp-origin-domain-source"
     },
     {
-      "path": "tripbased/capped_query.go",
-      "source_sha256": "e66046352f420a69ee5b9522a89dbc5785fab62593ebd9b7592605cec07118f7",
+      "path": "tripbased/capped_source_domain_internal_test.go",
+      "source_sha256": "21c21df9b542d034a3e199146eab9044b081ce1c5ab9e6af014fe52cee93de82",
       "baseline_sha256": null,
-      "output_sha256": "507df1a5dbafc58bee3c06eeb6ee2220889611f9efc24677f0933fae694ff8e2",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/capped_query.go"
+      "output_sha256": "21c21df9b542d034a3e199146eab9044b081ce1c5ab9e6af014fe52cee93de82",
+      "reason": "accepted clean retained origin-domain TP project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/tp/source/tripbased/capped_source_domain_internal_test.go",
+      "source_pin_record": "non-csa-v2-tp-origin-domain-source"
     },
     {
-      "path": "tripbased/cost_summary.go",
-      "source_sha256": "2b595bc6595ed0125faa388170b5bdb4cecd2f8753d1b60e017e6b86d810c219",
-      "baseline_sha256": "7bc343cde3e2a96f78885f7b2349a4f16a9ad774f5ad8260727cf8ba49655aaf",
-      "output_sha256": "d686016f8800364ad351da9bab8a440d4daa50042b5c59164ea526c168ec649c",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "replace only TREXIndex.CostSummary from T-REX v6 to count compact edges and proofs",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/cost_summary.go"
-    },
-    {
-      "path": "tripbased/flash.go",
-      "source_sha256": "0f83a2a2a1ef55ed8cd27bb0c09856338f71124d214661d980d778c50183cce0",
-      "baseline_sha256": "858ab8f766b583ff2fd78d489bbfe5c81d0eb2f4a8a259a2018b9366dd4b0cf4",
-      "output_sha256": "1ea53260bdf2dedb271f269c738b271895aeb389a0275917c17923ed7ef5829b",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash.go"
-    },
-    {
-      "path": "tripbased/flash_breakpoints.go",
-      "source_sha256": "bd17460473ba930cdc7fea351cd4257a6150690afaecfe52c3b67b7f16408cc1",
+      "path": "tripbased/capped_source_domain_oracle_test.go",
+      "source_sha256": "add9750ef5ca977e35bb0f89c982e1d2232e0e39e9056d3689dbe4b7bc011c8c",
       "baseline_sha256": null,
-      "output_sha256": "af8a66abc935a28445495a40a043b47d2f884a3b161779a254905f39e2af4bb3",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_breakpoints.go"
-    },
-    {
-      "path": "tripbased/flash_breakpoints_test.go",
-      "source_sha256": "c6e2036ee0df8bcacc60e8c0477cda98dc392753b8b1ff09f81d1cdf10c0d363",
-      "baseline_sha256": null,
-      "output_sha256": "99ac41f098b66a583f5fbf686a82fca263ac7f6fa28f9b335d721ec3ddccea8f",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_breakpoints_test.go"
-    },
-    {
-      "path": "tripbased/flash_cap_test.go",
-      "source_sha256": "b8500e14147bbb71096b845d373b61e41b25e778476f5653338135ea0f6d7e92",
-      "baseline_sha256": null,
-      "output_sha256": "8f23ae34c7c1b16e0107c3f8e8e1580c1d9a860e73546024f90c1a1f2e9526ec",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_cap_test.go"
-    },
-    {
-      "path": "tripbased/flash_capped.go",
-      "source_sha256": "b5748136a68b9d2a336c445aa15194a7adedf0bea6152ec11295e89903bff859",
-      "baseline_sha256": null,
-      "output_sha256": "4d0b3ae6b31ae1c0545e3db70339aefc1b8ae6fd4b0d9769004ab3bbb51d7cdb",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_capped.go"
-    },
-    {
-      "path": "tripbased/flash_graph.go",
-      "source_sha256": "628ecdb404d6dbcd834c5d16e15847297808016e027a1a82a42f7cafbc18316d",
-      "baseline_sha256": "48f2300ea49e29d40af387fd9e39a3e3d93acc502c8f94f59612f20e17f249b6",
-      "output_sha256": "00206c170c2e0dd1b05126d5efd02d75ff05d6873c0434e57254b3620ee0914e",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_graph.go"
-    },
-    {
-      "path": "tripbased/flash_partition_test.go",
-      "source_sha256": "e6eb7a7da3eaeac65b590aa08d82940810af0db983ea796083380019a02aa603",
-      "baseline_sha256": null,
-      "output_sha256": "159564f615b51e172719b1364ab38083992a29b52885bd7addc562218adae229",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_partition_test.go"
-    },
-    {
-      "path": "tripbased/flash_retained.go",
-      "source_sha256": "8fe3b7119e7a8390133befabaa304e9e9b0f542c131d4afd0d3f2514d0fa4c2b",
-      "baseline_sha256": null,
-      "output_sha256": "e65439c050357c31fc7b00b974b16e9fe488a9380d56779efb089e3de59655d3",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_retained.go"
-    },
-    {
-      "path": "tripbased/flash_retained_test.go",
-      "source_sha256": "0fb10994e471683e7bd5a82f019d3cf93e76323936ae7f88890e19831410726d",
-      "baseline_sha256": null,
-      "output_sha256": "7ce409c7a7003a5c93813218f99ee8c8a8d04521c6e5bf1c91b3c3d57fd3fd98",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_retained_test.go"
-    },
-    {
-      "path": "tripbased/flash_role_caps_test.go",
-      "source_sha256": "b783837ce85eb8cda4100a613cb991134afac430274a69a10b74728a27d2d42e",
-      "baseline_sha256": null,
-      "output_sha256": "bcb733b37473ced61f38e1d740bc00eb65726423f327ca21bbe8e3e39082eee5",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_role_caps_test.go"
-    },
-    {
-      "path": "tripbased/flash_rules.go",
-      "source_sha256": "72496ac502be2f9edf8f9e86d1a189cc2148c9778ff61a8d27cb1282d84ead83",
-      "baseline_sha256": null,
-      "output_sha256": "1d0e6061c3cfafc2c7a2cbc1bdca5854ca77e03b3cd43b754c6dd502f53ad80e",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_rules.go"
-    },
-    {
-      "path": "tripbased/flash_rules_test.go",
-      "source_sha256": "2322a47b174f8a3c0cc63e2ef42fc760b9ba72fdc52e0abc3c0e94d1b815d7e5",
-      "baseline_sha256": null,
-      "output_sha256": "d6068a539e7ba48fb1fca890bfc7b82bb7dff01dc11fabffaf30ff00b0e22db2",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_rules_test.go"
-    },
-    {
-      "path": "tripbased/flash_test.go",
-      "source_sha256": "db49991e0c9fea50f9b4c2f3e3caf6f6b188cbb537f422908a346068f855b304",
-      "baseline_sha256": null,
-      "output_sha256": "127560575ad33056f7c989f2a67ec387e09671c175b88163e0ac2a01e6a4bda0",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/flash_test.go"
-    },
-    {
-      "path": "tripbased/independent_spec_test.go",
-      "source_sha256": "a14d902debec0ed4309dfc7e36a55db6a2d7d5ff1ee999bb1775b824b152dab7",
-      "baseline_sha256": null,
-      "output_sha256": "52b658d9a4c809391800d6e22e31445596bff3cf5758f18295970bdf079da3fd",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/independent_spec_test.go"
-    },
-    {
-      "path": "tripbased/index.go",
-      "source_sha256": "c795c8395e4a3101ba452a50ae77f836f9e26c05fd2ed44d8e001a3fe72c3b91",
-      "baseline_sha256": "f740cff1c4b9e0e7552fe49621369c6176967d52491ec334e809551b8ce982fb",
-      "output_sha256": "cf39823376309fb08f5c091caeeb95a79aca06316738673c49db1e76d9ac28e5",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/index.go"
-    },
-    {
-      "path": "tripbased/partial_snapshot_test.go",
-      "source_sha256": "8bace5cd370b754833c81ab546fdd7f176862fe09ca0609beaa0f0d2ef06b29b",
-      "baseline_sha256": null,
-      "output_sha256": "51d318ce919149115270cee61114910eeb2f4c990019c4c25f4ac0088fee1c4a",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/partial_snapshot_test.go"
-    },
-    {
-      "path": "tripbased/patterns.go",
-      "source_sha256": "beb45a5952eca129f90796f3b154de1cfb0172d79f2b14ee946998d7e320e9ce",
-      "baseline_sha256": "7dc817744b941424c2f4fc7417958f57dd02ba73dd3b8232815d6cc4f90f2487",
-      "output_sha256": "9a3a6fd29ad1d7a3d55c09da141df02a31ae833d32dd7d50b60da890e564e945",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/patterns.go"
+      "output_sha256": "add9750ef5ca977e35bb0f89c982e1d2232e0e39e9056d3689dbe4b7bc011c8c",
+      "reason": "accepted clean retained origin-domain TP project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/tp/source/tripbased/capped_source_domain_oracle_test.go",
+      "source_pin_record": "non-csa-v2-tp-origin-domain-source"
     },
     {
       "path": "tripbased/patterns_query.go",
-      "source_sha256": "9e22d02da6941bfd17a394540b24fe140f684d8d46acf448ef10dd0f5d8d781d",
-      "baseline_sha256": "77859585f5ac9c987e4fe45c9a2e951a75a0c612d5b323b4db7249dadf1ef55e",
-      "output_sha256": "d4ba7ce078b9b0583d80d83a83398b2d028f1f881d77627a88a462c6689958d6",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite",
-        "release composition repair: skip empty class-filtered Scalable TP line before reading pickup/dropoff prototype; existing cross-repository literal regression protects behavior"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/patterns_query.go"
-    },
-    {
-      "path": "tripbased/patterns_test.go",
-      "source_sha256": "c9c6adfb2e9015b379fb3f6b79ec887b9934d8d16648f0de1c1ebd9d3334dcbc",
-      "baseline_sha256": null,
-      "output_sha256": "cb0d12ba17d0a6d7d32737a0d29de80bd8f3528e7b9323656d7e9f47caed4984",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/patterns_test.go"
-    },
-    {
-      "path": "tripbased/query.go",
-      "source_sha256": "732aeef65a01f0fe225f4ec3336c791d5eda1856222efe47bb4cb757e3c740ef",
-      "baseline_sha256": "b55aace2b8e936fde10c0fbb9269e1c50c338c55c296a8126e5cd3bbdd899384",
-      "output_sha256": "b85fd359a5362825de485da9015fcab9a08a361f9913eac749402f330284c91b",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/query.go"
-    },
-    {
-      "path": "tripbased/reviewer_partial_snapshot_test.go",
-      "source_sha256": "b63cb4caadb183489d5740e16c378f6dc837282797945348d893996476533c76",
-      "baseline_sha256": null,
-      "output_sha256": "f778be488fc905a076e8c25c6439817d96405c945fb0de63e3a72a6f445105fc",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/reviewer_partial_snapshot_test.go"
-    },
-    {
-      "path": "tripbased/scalable.go",
-      "source_sha256": "2105da96efabf9cb38e67b3572cad73d9ce6d85f6d4afd7f38410a43ca3fca61",
-      "baseline_sha256": "a0aa89c9bc35e11bcf39df404665d89e80e08599d7d60299bcdf601c81c5d01c",
-      "output_sha256": "84a071f41b7586cc70fac46cdb84a8f079f564f4ba0ed7ba01ec0d0d1f8f8f7e",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/scalable.go"
-    },
-    {
-      "path": "tripbased/testdata/exact_storage_cases.json",
-      "source_sha256": "8bc41246d8676453f32e58bf6363e8821970ec9c90d9a60d0bc6d1004c4a4af0",
-      "baseline_sha256": null,
-      "output_sha256": "8bc41246d8676453f32e58bf6363e8821970ec9c90d9a60d0bc6d1004c4a4af0",
-      "reason": "original synthetic test fixture",
+      "source_sha256": "37485d9bf79815bc21e07f46e34788c4c7f1cfbb20344cd92addc2aaddd36767",
+      "baseline_sha256": "d4ba7ce078b9b0583d80d83a83398b2d028f1f881d77627a88a462c6689958d6",
+      "output_sha256": "37485d9bf79815bc21e07f46e34788c4c7f1cfbb20344cd92addc2aaddd36767",
+      "reason": "accepted clean retained origin-domain TP project source; local provenance only",
       "transforms": [],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/testdata/exact_storage_cases.json"
+      "source_stage_relative_path": "non-csa-qualification-v2/tp/source/tripbased/patterns_query.go",
+      "source_pin_record": "non-csa-v2-tp-origin-domain-source"
     },
     {
-      "path": "tripbased/testdata/fixed_caps_cases.jsonl",
-      "source_sha256": "bf2d8cd4caf243e797b28e7585801b98408303be17ebd3c426e443f5299a675f",
+      "path": "tripbased/reviewer_rank_loss_control_test.go",
+      "source_sha256": "4a21ec8d72ed3f6635d910a56d0a870626980746ab104bf9ee1b3aadc04ce06a",
       "baseline_sha256": null,
-      "output_sha256": "bf2d8cd4caf243e797b28e7585801b98408303be17ebd3c426e443f5299a675f",
-      "reason": "original synthetic test fixture",
+      "output_sha256": "4a21ec8d72ed3f6635d910a56d0a870626980746ab104bf9ee1b3aadc04ce06a",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
       "transforms": [],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/testdata/fixed_caps_cases.jsonl"
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/reviewer_rank_loss_control_test.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/testdata/trex_cap_certification/LICENSE-CC0.txt",
-      "source_sha256": "82e3e0f4eb7c6493beffa627566cb14a6aab7a1cfd84834bb36d91b4b8aa303b",
+      "path": "tripbased/testdata/trex_fixed_transfer_cap/README.md",
+      "source_sha256": "a5641efb335ac18e9f3da58aac12c12a413cc3c2750ff447ae177c0e4a147365",
       "baseline_sha256": null,
-      "output_sha256": "82e3e0f4eb7c6493beffa627566cb14a6aab7a1cfd84834bb36d91b4b8aa303b",
-      "reason": "portable synthetic T-REX certification reproduction",
+      "output_sha256": "a5641efb335ac18e9f3da58aac12c12a413cc3c2750ff447ae177c0e4a147365",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
       "transforms": [],
-      "source_stage_relative_path": "public-release-candidate-v4/reproduction-candidates/routing/tripbased/testdata/trex_cap_certification/LICENSE-CC0.txt"
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/testdata/trex_fixed_transfer_cap/README.md",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/testdata/trex_cap_certification/README.md",
-      "source_sha256": "92532bc5314792da3537774a60604b4697acf3780590f4e35000dad5bf5f082d",
+      "path": "tripbased/testdata/trex_fixed_transfer_cap/rank-loss.json",
+      "source_sha256": "a034bfb37691ec030b7fcbbf7e26a03b3aadcd8fd77284d56e168fc6d5f897ab",
       "baseline_sha256": null,
-      "output_sha256": "92532bc5314792da3537774a60604b4697acf3780590f4e35000dad5bf5f082d",
-      "reason": "portable synthetic T-REX certification reproduction",
+      "output_sha256": "a034bfb37691ec030b7fcbbf7e26a03b3aadcd8fd77284d56e168fc6d5f897ab",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
       "transforms": [],
-      "source_stage_relative_path": "public-release-candidate-v4/reproduction-candidates/routing/tripbased/testdata/trex_cap_certification/README.md"
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/testdata/trex_fixed_transfer_cap/rank-loss.json",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/testdata/trex_cap_certification/fixtures.json",
-      "source_sha256": "c29033f66b1df7049ef4aa328c8fec9c5517b84be107beee71b615b8a283fdac",
+      "path": "tripbased/testdata/trex_preprocessing/README.md",
+      "source_sha256": "adf2864b1c3b7cfdaeab663d5400b67e84fb47ea9b87b271b7f39513e2a99dae",
       "baseline_sha256": null,
-      "output_sha256": "c29033f66b1df7049ef4aa328c8fec9c5517b84be107beee71b615b8a283fdac",
-      "reason": "portable synthetic T-REX certification reproduction",
+      "output_sha256": "adf2864b1c3b7cfdaeab663d5400b67e84fb47ea9b87b271b7f39513e2a99dae",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
       "transforms": [],
-      "source_stage_relative_path": "public-release-candidate-v4/reproduction-candidates/routing/tripbased/testdata/trex_cap_certification/fixtures.json"
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/testdata/trex_preprocessing/README.md",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/transfer_storage.go",
-      "source_sha256": "d6c0b99c764e6603598bec90088e10466bf9943802a2b2180e7a2d5e3e005190",
+      "path": "tripbased/testdata/trex_preprocessing/fixtures.json",
+      "source_sha256": "3f90746a970f2d1303df8de5b7f15356e9e5f1b3937cbe7f36e6a462af9d487b",
       "baseline_sha256": null,
-      "output_sha256": "d6c0b99c764e6603598bec90088e10466bf9943802a2b2180e7a2d5e3e005190",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/transfer_storage.go"
-    },
-    {
-      "path": "tripbased/transfer_storage_test.go",
-      "source_sha256": "bda369027e8fe4bc2bfb31f1fc3d040aa8059136b74a19c8263d7e9cb3b59a21",
-      "baseline_sha256": null,
-      "output_sha256": "f100fa7123a81db78e406ed6591c78685ec1a80d4ac3265185084947df663e29",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/transfer_storage_test.go"
+      "output_sha256": "3f90746a970f2d1303df8de5b7f15356e9e5f1b3937cbe7f36e6a462af9d487b",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/testdata/trex_preprocessing/fixtures.json",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
       "path": "tripbased/trex.go",
-      "source_sha256": "ab07b0b660b6e485c9a742016704b8ef7c305bf93d85cc23b38f1e71dc66ca14",
-      "baseline_sha256": "b04936480ba41a79f32f34063a0f93eb9edb293334396cbc2fbcf55856d54574",
-      "output_sha256": "622e66e3181ef3ed62c6521107e20228c02a567f076a1c0cef4693a733304e8c",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex.go"
-    },
-    {
-      "path": "tripbased/trex_cap_certificate.go",
-      "source_sha256": "dccd7aa41c20b19cb1d60661df2f8e17c6f7e82f2553c26762202f574c8f0e25",
-      "baseline_sha256": null,
-      "output_sha256": "6a7e9889828bd1c8e40f6b70d4193ce7bc949e2708d9d6b8ba7e244fe9b749c8",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_cap_certificate.go"
-    },
-    {
-      "path": "tripbased/trex_cap_certification_test.go",
-      "source_sha256": "b7e54852ae4bce59b7ba00307417cc910f9cc4aa96a0697eb3a1a4ab01c5f919",
-      "baseline_sha256": null,
-      "output_sha256": "b7e54852ae4bce59b7ba00307417cc910f9cc4aa96a0697eb3a1a4ab01c5f919",
-      "reason": "portable synthetic T-REX certification reproduction",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "public-release-candidate-v4/reproduction-candidates/routing/tripbased/trex_cap_certification_test.go"
-    },
-    {
-      "path": "tripbased/trex_cap_kernel_diagnostic_test.go",
-      "source_sha256": "2b71c71d37126b9f10882036872aaa8d49fd01c28e0c3fe188201bbb4cb5cd80",
-      "baseline_sha256": null,
-      "output_sha256": "2b71c71d37126b9f10882036872aaa8d49fd01c28e0c3fe188201bbb4cb5cd80",
-      "reason": "portable synthetic T-REX certification reproduction",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "public-release-candidate-v4/reproduction-candidates/routing/tripbased/trex_cap_kernel_diagnostic_test.go"
+      "source_sha256": "0cb573f7cf9cedcee86931596b67f2e9333bdf911d6b80ec34d6f359e49d1801",
+      "baseline_sha256": "622e66e3181ef3ed62c6521107e20228c02a567f076a1c0cef4693a733304e8c",
+      "output_sha256": "0cb573f7cf9cedcee86931596b67f2e9333bdf911d6b80ec34d6f359e49d1801",
+      "reason": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate-v2/tripbased/trex.go",
+      "source_pin_record": "non-csa-v2-trex-shadow-reporting-source"
     },
     {
       "path": "tripbased/trex_customization.go",
-      "source_sha256": "7b660523b9781b930957704249cf4f5c21cf61219ee21c6a905ab8e70ccaa1e6",
-      "baseline_sha256": "ed9969c5794c3d865cb5f78560df2594f90634e088d4cb997e854051e1fa8113",
-      "output_sha256": "cfdfe066a227ff08c9f7cc21ff50e35a921e610f80bccb957be0e6ab73aeb66f",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_customization.go"
+      "source_sha256": "6b2014268e6b19b1ebb9d0744a23fafe745f3e6e2d591a712b8da0d8dbc89b40",
+      "baseline_sha256": "cfdfe066a227ff08c9f7cc21ff50e35a921e610f80bccb957be0e6ab73aeb66f",
+      "output_sha256": "6b2014268e6b19b1ebb9d0744a23fafe745f3e6e2d591a712b8da0d8dbc89b40",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/trex_customization.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
       "path": "tripbased/trex_diagnostic.go",
-      "source_sha256": "95b2cfae76cdf89122b8e100b83cd0c330efb8fa17028c10d8baedb25952adce",
-      "baseline_sha256": null,
-      "output_sha256": "95b2cfae76cdf89122b8e100b83cd0c330efb8fa17028c10d8baedb25952adce",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_diagnostic.go"
+      "source_sha256": "6051dc45d12e3a535ab2f02bf31090d0cd386d5e22c408132dca13a6f43ac0d7",
+      "baseline_sha256": "95b2cfae76cdf89122b8e100b83cd0c330efb8fa17028c10d8baedb25952adce",
+      "output_sha256": "6051dc45d12e3a535ab2f02bf31090d0cd386d5e22c408132dca13a6f43ac0d7",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/trex_diagnostic.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/trex_partition.go",
-      "source_sha256": "5593e6b73434b7055884d00a205ec1567dd34204527819d44ab0b1e1570f76d3",
-      "baseline_sha256": "721c9487dcb9359a87435a792acb989af5d50b8325088a79f437836286084cf4",
-      "output_sha256": "5593e6b73434b7055884d00a205ec1567dd34204527819d44ab0b1e1570f76d3",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_partition.go"
+      "path": "tripbased/trex_fixed_cap_independent_test.go",
+      "source_sha256": "bada5b15cf11c882a640b3013a398eb98a1593bf23f7ebf9d2f36424092c94ef",
+      "baseline_sha256": null,
+      "output_sha256": "bada5b15cf11c882a640b3013a398eb98a1593bf23f7ebf9d2f36424092c94ef",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/trex_fixed_cap_independent_test.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/trex_proofs.go",
-      "source_sha256": "731aac977eeb4ddb81df4c6dd0c144e5f4b3a94697ce9a69814d4516210a60bd",
+      "path": "tripbased/trex_fixed_transfer_cap_candidate.go",
+      "source_sha256": "0ee0759b01f95f839152f7b18659100e58ede0fe7926a02879898248aade50c4",
       "baseline_sha256": null,
-      "output_sha256": "731aac977eeb4ddb81df4c6dd0c144e5f4b3a94697ce9a69814d4516210a60bd",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_proofs.go"
+      "output_sha256": "0ee0759b01f95f839152f7b18659100e58ede0fe7926a02879898248aade50c4",
+      "reason": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate-v2/tripbased/trex_fixed_transfer_cap_candidate.go",
+      "source_pin_record": "non-csa-v2-trex-shadow-reporting-source"
     },
     {
-      "path": "tripbased/trex_proofs_test.go",
-      "source_sha256": "1eaecc5a5b75c14bcd93dfe8399e12cabcf1c9e474f1af565d0598726c8856b8",
+      "path": "tripbased/trex_fixed_transfer_cap_candidate_test.go",
+      "source_sha256": "62949b764088907bb829aaaf45ce22fff64962e2ef2de46226c8c33e5421c325",
       "baseline_sha256": null,
-      "output_sha256": "318df6095e71cb0d0c545034ae6427cd3266ce79226a3357ae47b86eb8e34ab8",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_proofs_test.go"
+      "output_sha256": "62949b764088907bb829aaaf45ce22fff64962e2ef2de46226c8c33e5421c325",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/trex_fixed_transfer_cap_candidate_test.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
+    },
+    {
+      "path": "tripbased/trex_preprocessing_test.go",
+      "source_sha256": "4ed0bd08f01731a9ce709e5a50f91190e2192fcd8cc8750b22124603836a210b",
+      "baseline_sha256": null,
+      "output_sha256": "4ed0bd08f01731a9ce709e5a50f91190e2192fcd8cc8750b22124603836a210b",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/trex_preprocessing_test.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
       "path": "tripbased/trex_query.go",
-      "source_sha256": "4bfab2d27b226287ebcfdf1abab76b3f124af9feaf3442dcc301dba78b101f9c",
-      "baseline_sha256": "1264dbfa7e2c83beceb32e4a6818fd357f92c565d709d6fcad1e3c6a3d675dbe",
-      "output_sha256": "59460670b40cb745cf259d6a63689f8cc6354f26cac937617fa8349193d14221",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_query.go"
+      "source_sha256": "b4ef29a963f239feb16b08e42a91dfc479c90c3ab479b7abea9df4b941cd7913",
+      "baseline_sha256": "59460670b40cb745cf259d6a63689f8cc6354f26cac937617fa8349193d14221",
+      "output_sha256": "b4ef29a963f239feb16b08e42a91dfc479c90c3ab479b7abea9df4b941cd7913",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/trex_query.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/trex_static_cap_certificate.go",
-      "source_sha256": "5405814eafa20ce115f06c4f9e403fc2eb5885c44b3885b9ecc6248bafe539bd",
+      "path": "tripbased/trex_role_cap_candidate.go",
+      "source_sha256": "cb9f721b5bb3b1f42b26545c50cfefb0a79a73a1beedaaaa1dd3e3f2c7d38ba5",
       "baseline_sha256": null,
-      "output_sha256": "f586f354b5c231dcc6f74cf14e1a16f6a3aa2d3c01aa56c34a94395cfe602a50",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_static_cap_certificate.go"
+      "output_sha256": "cb9f721b5bb3b1f42b26545c50cfefb0a79a73a1beedaaaa1dd3e3f2c7d38ba5",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/trex_role_cap_candidate.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/trex_storage.go",
-      "source_sha256": "258881a84762e41abe92d5a4820eb1b7286a8c34437584a113b3d9d9165fec09",
+      "path": "tripbased/trex_role_cap_candidate_test.go",
+      "source_sha256": "602fcf3dc585da1f2e41d864fd7113fcfa588f641a6f7ac4528e648288b497bd",
       "baseline_sha256": null,
-      "output_sha256": "05385e29ecb9dcb98baec226568f2a026b07a7c10149a38f5da0174102d74531",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_storage.go"
+      "output_sha256": "602fcf3dc585da1f2e41d864fd7113fcfa588f641a6f7ac4528e648288b497bd",
+      "reason": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate/tripbased/trex_role_cap_candidate_test.go",
+      "source_pin_record": "non-csa-v2-trex-ranked-and-prepared-verifier-source"
     },
     {
-      "path": "tripbased/trex_storage_test.go",
-      "source_sha256": "73b0fc4104350d25ded7fd6169865cea03cd81761d09c40cd50d710a230917ca",
+      "path": "tripbased/trex_shadow_reporting_test.go",
+      "source_sha256": "55d4fb6aaa9b9d20830fbace6fe2deb54ab7343240a34eaee5758c4b2676c671",
       "baseline_sha256": null,
-      "output_sha256": "4b5b6c93c4437d314c5908675ebbd90a65f17687067b4e216db2049e6cfeab37",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_storage_test.go"
-    },
-    {
-      "path": "tripbased/trex_work.go",
-      "source_sha256": "d1019998737e5d5df302dfc6134d6a039eac1949facc62cc44e18152ff8d9cf7",
-      "baseline_sha256": null,
-      "output_sha256": "d1019998737e5d5df302dfc6134d6a039eac1949facc62cc44e18152ff8d9cf7",
-      "reason": "T-REX v6 counted storage and mandatory capped verification",
-      "transforms": [
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "trex-counted-storage-work-v6/candidate/tripbased/trex_work.go"
-    },
-    {
-      "path": "tripbased/tripbased_test.go",
-      "source_sha256": "0ada2f7c0a16c4b9fd08d387db3931d4b83b2560cb6854a20b93362c002dc189",
-      "baseline_sha256": null,
-      "output_sha256": "c1f0eaf7cda2b8e795aceba37c2858d4a0d93afc6a9832d798b857c6a7cca14e",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/tripbased/tripbased_test.go"
-    },
-    {
-      "path": "ultra/capped.go",
-      "source_sha256": "060ddc367390a1f665d2c8070b03e0159089776126993ebab0a14427e3bc5de8",
-      "baseline_sha256": null,
-      "output_sha256": "ff4fe3a86923e9f38b8ddfad1fb4754760e475c3b44d76e1f8943b0c7d4141a7",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/ultra/capped.go"
-    },
-    {
-      "path": "ultra/capped_search.go",
-      "source_sha256": "46c054e535599de7b84f87e46f2d10c493e510ab979870211edc44e11ea460a5",
-      "baseline_sha256": null,
-      "output_sha256": "ffb5faa7cc306622a4589df8d7902784044163b132fd7facb6363806a8a16fac",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/ultra/capped_search.go"
-    },
-    {
-      "path": "ultra/sparse.go",
-      "source_sha256": "5c6482345797aed736b1b8ab272eded9f31220bb36679d22b07e6177fe517ffd",
-      "baseline_sha256": null,
-      "output_sha256": "ba02a1ea229167619a0656c3862d7a6db355f9a4ce6141820318f82226a6592b",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/ultra/sparse.go"
-    },
-    {
-      "path": "validate/journey.go",
-      "source_sha256": "0c01187ad5727e657815badffb5be0ed9278266a4091dafb9893209cf2c92768",
-      "baseline_sha256": "08572bafbee86f8b993d3943d3a4c8a27b462c17d7e6f69c14588e492c942483",
-      "output_sha256": "467b568a761fb7e1bbb45da32d54fa1539f9fceca1e6cbb6a7e04d3d71e298ef",
-      "reason": "TP v8 accepted source; common foundations and successful public implementations",
-      "transforms": [
-        "module import namespace rewrite",
-        "gofmt after public namespace rewrite"
-      ],
-      "source_stage_relative_path": "tp-profile-work-v8/candidate/validate/journey.go"
+      "output_sha256": "55d4fb6aaa9b9d20830fbace6fe2deb54ab7343240a34eaee5758c4b2676c671",
+      "reason": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+      "transforms": [],
+      "source_stage_relative_path": "non-csa-qualification-v2/trex/candidate-v2/tripbased/trex_shadow_reporting_test.go",
+      "source_pin_record": "non-csa-v2-trex-shadow-reporting-source"
     }
   ],
   "excluded": {
     "tripbased/allocation_differential_test.go": "opt-in artifact differential report writer; portable behavior coverage retained elsewhere",
-    "tripbased/retained_cost_sample_test.go": "opt-in local timing/report diagnostic, not needed for public reproduction"
+    "tripbased/retained_cost_sample_test.go": "opt-in local timing/report diagnostic, not needed for public reproduction",
+    "tripbased/qualification_driver_test.go": "artifact-only measurement driver/observer/test; excluded from public runtime and source tests",
+    "tripbased/qualification_progress.go": "artifact-only measurement driver/observer/test; excluded from public runtime and source tests",
+    "tripbased/qualification_progress_test.go": "artifact-only measurement driver/observer/test; excluded from public runtime and source tests",
+    "tripbased/qualification_protocol_test.go": "artifact-only measurement driver/observer/test; excluded from public runtime and source tests",
+    "tripbased/qualification_trex_observer.go": "artifact-only measurement driver/observer/test; excluded from public runtime and source tests"
   },
   "public_csa_byte_identical": true,
-  "cost_summary_trex_source_sha256": "5fa325892551d7101706d42aec236ff06d648f77177033cbcefd6337e605b160"
+  "cost_summary_trex_source_sha256": "5fa325892551d7101706d42aec236ff06d648f77177033cbcefd6337e605b160",
+  "previous_checkpoint_source_map": {
+    "path": "provenance/checkpoint-source-map-v5.json",
+    "sha256": "da20b8ae4f71e9b581d33b2a53425344b0f8aa57db5e54601dfb9fe54d125439",
+    "baseline_commit": "76cd3c946f41052623d7140b9832518e74bd7e6c",
+    "published_in_commit": "89c5217d6d317b43d0060c641802cb154f75d404",
+    "scope": "verbatim archived earlier source attribution and transformations; historical output hashes apply to that checkpoint"
+  },
+  "source_units": [
+    {
+      "record": "non-csa-v2-tp-origin-domain-source",
+      "scope": "accepted clean retained origin-domain TP project source; local provenance only",
+      "directory": "non-csa-qualification-v2/tp/source",
+      "manifest": "non-csa-qualification-v2/tp/evidence/source-freeze.json",
+      "patch": "non-csa-qualification-v2/tp/source-domain.patch",
+      "source_binding_sha256": "93d50ff225cb798aef916c4cbfda835e7de4f4ada4c30c03808e4d9a01834f05",
+      "aggregate_convention": "SHA-256 compact sorted JSON source_files list (path/sha256/size), UTF-8, no newline",
+      "files": 148
+    },
+    {
+      "record": "non-csa-v2-trex-ranked-and-prepared-verifier-source",
+      "scope": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+      "directory": "non-csa-qualification-v2/trex/candidate",
+      "manifest": "non-csa-qualification-v2/trex/source-manifest.json",
+      "patch": "non-csa-qualification-v2/trex/candidate.patch",
+      "source_binding_sha256": "8e7c7d621149272f7e2323807f0e13b5ebef4888746e9294c6c16e907d13a2d8",
+      "aggregate_convention": "SHA256 compact sorted JSON filename/hash mapping, UTF8, no newline",
+      "files": 156
+    },
+    {
+      "record": "non-csa-v2-trex-shadow-reporting-source",
+      "scope": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+      "directory": "non-csa-qualification-v2/trex/candidate-v2",
+      "manifest": "non-csa-qualification-v2/trex/source-v2-manifest.json",
+      "patch": "non-csa-qualification-v2/trex/shadow-reporting-v2.patch",
+      "source_binding_sha256": "51eedfe547c4dece8244485c08d65800166af70924e0d2c3e1dd64a998bdf6b4",
+      "aggregate_convention": "SHA256 UTF8 compact sorted JSON filename/hash mapping, no newline",
+      "files": 159
+    }
+  ],
+  "artifact_observation_calls_excluded_by_clean_source_selection": [
+    "tripbased/capped_patterns.go",
+    "tripbased/capped_retained.go",
+    "tripbased/trex_fixed_transfer_cap_candidate.go"
+  ],
+  "documentation_files": [
+    {
+      "path": "docs/SCOPE.md",
+      "sha256": "f5168a8ad3d7290fd045b6b25ce6ac1288f808a6b3fab91e5a2e0a8a51584726",
+      "bytes": 4179
+    },
+    {
+      "path": "docs/RESEARCH_CHECKPOINT.md",
+      "sha256": "4c04642c7ccaf295929c3af4c896fdb0349fa30d640fac9562000a75334112f8",
+      "bytes": 6785
+    },
+    {
+      "path": "docs/NON_CSA_QUALIFICATION_V2.md",
+      "sha256": "007332781d723ea942cab08cf7eb8aa0bbc95569cf055743df7bbd7c7ac9f3d0",
+      "bytes": 7868
+    },
+    {
+      "path": "provenance/SOURCES.md",
+      "sha256": "e2cfb741e313ad499fcfbe1e4dec229593ee4ca062825d7e4a9ce13ff16b1803",
+      "bytes": 3013
+    },
+    {
+      "path": "provenance/source-pins.json",
+      "sha256": "8b451a972b3a1927d22587cc0ff9f47115e216fb99a1ec5b8b04d1fc70bf0490",
+      "bytes": 11267
+    },
+    {
+      "path": "provenance/checkpoint-source-map-v5.json",
+      "sha256": "da20b8ae4f71e9b581d33b2a53425344b0f8aa57db5e54601dfb9fe54d125439",
+      "bytes": 38986
+    }
+  ],
+  "runtime_code_changes_since_accepted_clean_composition": false,
+  "new_composed_native_checks_or_model_results_claimed": false
 }

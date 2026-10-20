@@ -1,0 +1,464 @@
+{
+  "schema": "trex-preprocessing-literal-v1",
+  "license": "CC0-1.0",
+  "fixtures": [
+    {
+      "name": "one_transfer",
+      "dataset": {
+        "schema_version": "0.2",
+        "id": "synthetic:trex-preprocessing:one_transfer",
+        "data_kind": "synthetic-literal-preprocessing-proof",
+        "time_zone": "Asia/Singapore",
+        "service_date": "2026-10-16",
+        "stops": [
+          {
+            "id": "A",
+            "accessible": "yes"
+          },
+          {
+            "id": "B",
+            "accessible": "yes"
+          },
+          {
+            "id": "C",
+            "accessible": "yes"
+          },
+          {
+            "id": "D",
+            "accessible": "yes"
+          },
+          {
+            "id": "E",
+            "accessible": "yes"
+          },
+          {
+            "id": "F",
+            "accessible": "yes"
+          },
+          {
+            "id": "X",
+            "accessible": "yes"
+          }
+        ],
+        "trips": [
+          {
+            "id": "in",
+            "route_id": "in",
+            "accessible": "yes"
+          },
+          {
+            "id": "out",
+            "route_id": "out",
+            "accessible": "yes"
+          }
+        ],
+        "connections": [
+          {
+            "id": "in0",
+            "trip_id": "in",
+            "sequence": 0,
+            "from": "A",
+            "to": "B",
+            "departure": 0,
+            "arrival": 1,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "in1",
+            "trip_id": "in",
+            "sequence": 1,
+            "from": "B",
+            "to": "C",
+            "departure": 2,
+            "arrival": 3,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "out0",
+            "trip_id": "out",
+            "sequence": 0,
+            "from": "D",
+            "to": "E",
+            "departure": 6,
+            "arrival": 7,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "out1",
+            "trip_id": "out",
+            "sequence": 1,
+            "from": "E",
+            "to": "F",
+            "departure": 8,
+            "arrival": 9,
+            "pickup": true,
+            "dropoff": true
+          }
+        ],
+        "footpaths": [
+          {
+            "id": "cx",
+            "from": "C",
+            "to": "X",
+            "duration": 1,
+            "accessible": "yes"
+          },
+          {
+            "id": "xd",
+            "from": "X",
+            "to": "D",
+            "duration": 1,
+            "accessible": "yes"
+          }
+        ]
+      },
+      "query": {
+        "id": "one_transfer",
+        "origin": "B",
+        "destination": "F",
+        "departure": 2,
+        "latest_arrival": 100,
+        "transfer_buffer": 0,
+        "max_walk_seconds": 80,
+        "max_boardings": 3,
+        "max_legs": 64,
+        "accessible_only": false,
+        "walking_limits": {
+          "access_seconds": 20,
+          "egress_seconds": 20,
+          "transfer_seconds": 20,
+          "direct_seconds": 20
+        }
+      },
+      "partition": {
+        "A": 0,
+        "B": 0,
+        "C": 1,
+        "D": 1,
+        "E": 1,
+        "F": 0,
+        "X": 1
+      },
+      "expected_witness": {
+        "level": 0,
+        "cell": 1,
+        "source_trip": "in",
+        "source_board": 1,
+        "exit_trip": "out",
+        "exit_event": 1,
+        "transfers": [
+          0
+        ],
+        "journey": {
+          "legs": [
+            {
+              "kind": "ride",
+              "ref": "in1",
+              "departure": 2,
+              "arrival": 3
+            },
+            {
+              "kind": "walk",
+              "ref": "cx",
+              "departure": 3,
+              "arrival": 4
+            },
+            {
+              "kind": "walk",
+              "ref": "xd",
+              "departure": 4,
+              "arrival": 5
+            },
+            {
+              "kind": "ride",
+              "ref": "out0",
+              "departure": 6,
+              "arrival": 7
+            },
+            {
+              "kind": "ride",
+              "ref": "out1",
+              "departure": 8,
+              "arrival": 9
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "two_transfers",
+      "dataset": {
+        "schema_version": "0.2",
+        "id": "synthetic:trex-preprocessing:two_transfers",
+        "data_kind": "synthetic-literal-preprocessing-proof",
+        "time_zone": "Asia/Singapore",
+        "service_date": "2026-10-16",
+        "stops": [
+          {
+            "id": "A",
+            "accessible": "yes"
+          },
+          {
+            "id": "B",
+            "accessible": "yes"
+          },
+          {
+            "id": "C",
+            "accessible": "yes"
+          },
+          {
+            "id": "D",
+            "accessible": "yes"
+          },
+          {
+            "id": "E",
+            "accessible": "yes"
+          },
+          {
+            "id": "F",
+            "accessible": "yes"
+          },
+          {
+            "id": "G",
+            "accessible": "yes"
+          },
+          {
+            "id": "H",
+            "accessible": "yes"
+          },
+          {
+            "id": "I",
+            "accessible": "yes"
+          },
+          {
+            "id": "X",
+            "accessible": "yes"
+          },
+          {
+            "id": "Y",
+            "accessible": "yes"
+          }
+        ],
+        "trips": [
+          {
+            "id": "in",
+            "route_id": "in",
+            "accessible": "yes"
+          },
+          {
+            "id": "middle",
+            "route_id": "middle",
+            "accessible": "yes"
+          },
+          {
+            "id": "out",
+            "route_id": "out",
+            "accessible": "yes"
+          }
+        ],
+        "connections": [
+          {
+            "id": "in0",
+            "trip_id": "in",
+            "sequence": 0,
+            "from": "A",
+            "to": "B",
+            "departure": 0,
+            "arrival": 1,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "in1",
+            "trip_id": "in",
+            "sequence": 1,
+            "from": "B",
+            "to": "C",
+            "departure": 2,
+            "arrival": 3,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "middle0",
+            "trip_id": "middle",
+            "sequence": 0,
+            "from": "D",
+            "to": "E",
+            "departure": 6,
+            "arrival": 7,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "middle1",
+            "trip_id": "middle",
+            "sequence": 1,
+            "from": "E",
+            "to": "F",
+            "departure": 8,
+            "arrival": 9,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "out0",
+            "trip_id": "out",
+            "sequence": 0,
+            "from": "G",
+            "to": "H",
+            "departure": 12,
+            "arrival": 13,
+            "pickup": true,
+            "dropoff": true
+          },
+          {
+            "id": "out1",
+            "trip_id": "out",
+            "sequence": 1,
+            "from": "H",
+            "to": "I",
+            "departure": 14,
+            "arrival": 15,
+            "pickup": true,
+            "dropoff": true
+          }
+        ],
+        "footpaths": [
+          {
+            "id": "cx",
+            "from": "C",
+            "to": "X",
+            "duration": 1,
+            "accessible": "yes"
+          },
+          {
+            "id": "xd",
+            "from": "X",
+            "to": "D",
+            "duration": 1,
+            "accessible": "yes"
+          },
+          {
+            "id": "fy",
+            "from": "F",
+            "to": "Y",
+            "duration": 1,
+            "accessible": "yes"
+          },
+          {
+            "id": "yg",
+            "from": "Y",
+            "to": "G",
+            "duration": 1,
+            "accessible": "yes"
+          }
+        ]
+      },
+      "query": {
+        "id": "two_transfers",
+        "origin": "B",
+        "destination": "I",
+        "departure": 2,
+        "latest_arrival": 100,
+        "transfer_buffer": 0,
+        "max_walk_seconds": 80,
+        "max_boardings": 3,
+        "max_legs": 64,
+        "accessible_only": false,
+        "walking_limits": {
+          "access_seconds": 20,
+          "egress_seconds": 20,
+          "transfer_seconds": 20,
+          "direct_seconds": 20
+        }
+      },
+      "partition": {
+        "A": 0,
+        "B": 0,
+        "C": 1,
+        "D": 1,
+        "E": 1,
+        "F": 1,
+        "G": 1,
+        "H": 1,
+        "I": 0,
+        "X": 1,
+        "Y": 1
+      },
+      "expected_witness": {
+        "level": 0,
+        "cell": 1,
+        "source_trip": "in",
+        "source_board": 1,
+        "exit_trip": "out",
+        "exit_event": 1,
+        "transfers": [
+          0,
+          1
+        ],
+        "journey": {
+          "legs": [
+            {
+              "kind": "ride",
+              "ref": "in1",
+              "departure": 2,
+              "arrival": 3
+            },
+            {
+              "kind": "walk",
+              "ref": "cx",
+              "departure": 3,
+              "arrival": 4
+            },
+            {
+              "kind": "walk",
+              "ref": "xd",
+              "departure": 4,
+              "arrival": 5
+            },
+            {
+              "kind": "ride",
+              "ref": "middle0",
+              "departure": 6,
+              "arrival": 7
+            },
+            {
+              "kind": "ride",
+              "ref": "middle1",
+              "departure": 8,
+              "arrival": 9
+            },
+            {
+              "kind": "walk",
+              "ref": "fy",
+              "departure": 9,
+              "arrival": 10
+            },
+            {
+              "kind": "walk",
+              "ref": "yg",
+              "departure": 10,
+              "arrival": 11
+            },
+            {
+              "kind": "ride",
+              "ref": "out0",
+              "departure": 12,
+              "arrival": 13
+            },
+            {
+              "kind": "ride",
+              "ref": "out1",
+              "departure": 14,
+              "arrival": 15
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -4,17 +4,18 @@ package tripbased
 // remain in Snapshot; this view never expands or copies those large collections.
 // Call only after preparation returns, as with Snapshot.
 type TREXDiagnostic struct {
-	Profile           string               `json:"profile"`
-	Complete          bool                 `json:"complete"`
-	Error             string               `json:"error,omitempty"`
-	Config            TREXConfig           `json:"config"`
-	Stats             TREXStats            `json:"stats"`
-	Phases            map[string]TREXPhase `json:"phases"`
-	ClosureDiameter   int64                `json:"closure_diameter"`
-	RetainedTransfers int                  `json:"retained_transfers"`
-	RetainedWitnesses int                  `json:"retained_witnesses"`
-	PartitionStops    int                  `json:"partition_stops"`
-	WalkingComponents int                  `json:"walking_components"`
+	FixedTransferWalkingCap *int64               `json:"fixed_transfer_walking_cap,omitempty"`
+	Profile                 string               `json:"profile"`
+	Complete                bool                 `json:"complete"`
+	Error                   string               `json:"error,omitempty"`
+	Config                  TREXConfig           `json:"config"`
+	Stats                   TREXStats            `json:"stats"`
+	Phases                  map[string]TREXPhase `json:"phases"`
+	ClosureDiameter         int64                `json:"closure_diameter"`
+	RetainedTransfers       int                  `json:"retained_transfers"`
+	RetainedWitnesses       int                  `json:"retained_witnesses"`
+	PartitionStops          int                  `json:"partition_stops"`
+	WalkingComponents       int                  `json:"walking_components"`
 }
 
 func (x *TREXIndex) Diagnostic() TREXDiagnostic {
@@ -24,6 +25,10 @@ func (x *TREXIndex) Diagnostic() TREXDiagnostic {
 		RetainedTransfers: len(x.edges), RetainedWitnesses: x.proofs.count,
 		PartitionStops: len(s.Partition.Cells), WalkingComponents: s.Partition.Components,
 		Phases: make(map[string]TREXPhase, len(s.Phases))}
+	if x.staticRulesCandidate && x.transferWalkLimit != nil {
+		cap := *x.transferWalkLimit
+		out.FixedTransferWalkingCap = &cap
+	}
 	out.Config.Partition = make(map[string]int, len(s.Config.Partition))
 	for k, v := range s.Config.Partition {
 		out.Config.Partition[k] = v

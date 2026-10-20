@@ -86,17 +86,18 @@ type TREXPhase struct {
 	Work           int    `json:"work"`
 }
 type TREXSnapshot struct {
-	Profile         string               `json:"profile"`
-	Complete        bool                 `json:"complete"`
-	Error           string               `json:"error,omitempty"`
-	Config          TREXConfig           `json:"config"`
-	Stats           TREXStats            `json:"stats"`
-	Partition       TREXPartition        `json:"partition"`
-	Lines           [][]string           `json:"lines"`
-	ClosureDiameter int64                `json:"closure_diameter"`
-	Transfers       []TREXTransfer       `json:"transfers"`
-	Witnesses       []TREXWitness        `json:"traversal_witnesses"`
-	Phases          map[string]TREXPhase `json:"phases"`
+	FixedTransferWalkingCap *int64               `json:"fixed_transfer_walking_cap,omitempty"`
+	Profile                 string               `json:"profile"`
+	Complete                bool                 `json:"complete"`
+	Error                   string               `json:"error,omitempty"`
+	Config                  TREXConfig           `json:"config"`
+	Stats                   TREXStats            `json:"stats"`
+	Partition               TREXPartition        `json:"partition"`
+	Lines                   [][]string           `json:"lines"`
+	ClosureDiameter         int64                `json:"closure_diameter"`
+	Transfers               []TREXTransfer       `json:"transfers"`
+	Witnesses               []TREXWitness        `json:"traversal_witnesses"`
+	Phases                  map[string]TREXPhase `json:"phases"`
 }
 type trexEdge struct {
 	from, exit, to, board int
@@ -105,7 +106,7 @@ type trexEdge struct {
 type trexOverlay struct{ starts, edges []int }
 type TREXIndex struct {
 	staticRulesCandidate bool   // opt-in qualification profile; legacy BuildTREX stays strict
-	transferWalkLimit    *int64 // only the separate unranked capped-walking builder sets this
+	transferWalkLimit    *int64 // fixed-cap ranked and separate unranked builders bind this policy
 	base                 *Index
 	cfg                  TREXConfig
 	proofs               trexProofStore
@@ -126,6 +127,10 @@ func (x *TREXIndex) Complete() bool { return x != nil && x.snap.Complete }
 func (x *TREXIndex) Snapshot() TREXSnapshot {
 	// Diagnostic serialization deliberately owns every nested collection.
 	view := x.snap
+	if x.staticRulesCandidate && x.transferWalkLimit != nil {
+		cap := *x.transferWalkLimit
+		view.FixedTransferWalkingCap = &cap
+	}
 	view.Witnesses = x.expandTREXProofs()
 	view.Transfers = make([]TREXTransfer, len(x.edges))
 	for id, e := range x.edges {
@@ -172,6 +177,16 @@ func BuildTREXStaticRulesCandidate(ctx context.Context, d model.Dataset, cfg TRE
 	return buildTREXPolicy(ctx, d, cfg, nil, true)
 }
 
+// BuildTREXFixedTransferCapRankedCandidate customizes one fixed-cap transfer
+// graph. Ranks and overlays remain active; per-query replay and independent
+// frontier certification are still required. Query transfer caps must match.
+func BuildTREXFixedTransferCapRankedCandidate(ctx context.Context, d model.Dataset, cfg TREXConfig, transferWalkingCap int64) (*TREXIndex, error) {
+	if transferWalkingCap < 0 {
+		return nil, fmt.Errorf("fixed transfer walking cap must be nonnegative")
+	}
+	return buildTREXPolicy(ctx, d, cfg, &transferWalkingCap, true)
+}
+
 func buildTREX(ctx context.Context, d model.Dataset, cfg TREXConfig, transferWalkLimit *int64) (*TREXIndex, error) {
 	return buildTREXPolicy(ctx, d, cfg, transferWalkLimit, false)
 }
@@ -185,6 +200,9 @@ func buildTREXPolicy(ctx context.Context, d model.Dataset, cfg TREXConfig, trans
 	x = &TREXIndex{staticRulesCandidate: staticRulesCandidate, transferWalkLimit: transferWalkLimit, cfg: cfg, ids: map[string]int{}, snap: TREXSnapshot{Profile: "trex_positive_static_transitive_nonbinding_v1", Config: cfg, Transfers: []TREXTransfer{}, Witnesses: []TREXWitness{}, Phases: map[string]TREXPhase{}}}
 	if staticRulesCandidate {
 		x.snap.Profile = "trex_static_stop_pair_nonbinding_candidate_v1"
+		if transferWalkLimit != nil {
+			x.snap.Profile = "trex_static_stop_pair_fixed_transfer_cap_ranked_candidate_v1"
+		}
 	}
 	defer func() {
 		x.snap.Complete = err == nil

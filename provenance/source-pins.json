@@ -243,5 +243,78 @@
         "sha256": "99f1e95f13c63ea76b05fad6fd6ea48ffa1c425911f92b5623e37f8aa78414c6"
       }
     ]
+  },
+  {
+    "record": "non-csa-v2-published-routing-baseline",
+    "urls": [
+      "https://github.com/Ertyoii/transit-routing-go/commit/89c5217d6d317b43d0060c641802cb154f75d404"
+    ],
+    "files": [],
+    "commit": "89c5217d6d317b43d0060c641802cb154f75d404",
+    "tree": "ab2eedec6fa31f1e88db19c2c84163dc37477b96",
+    "scope": "published public source baseline; existing notices and source lineage preserved"
+  },
+  {
+    "record": "non-csa-v2-tp-origin-domain-source",
+    "urls": [],
+    "files": [
+      {
+        "path": "non-csa-qualification-v2/tp/evidence/source-freeze.json",
+        "bytes": 24351,
+        "sha256": "4fd7b9a578b255e40366d3b936797905d8e0b4cff7c101e4bd4abef6da63e4a8"
+      },
+      {
+        "path": "non-csa-qualification-v2/tp/source-domain.patch",
+        "bytes": 30402,
+        "sha256": "ab384ebe2c4c69cc8012ebf3a85b869ec5f2cd9a7e7af00f27ea9e75852538e7"
+      }
+    ],
+    "scope": "accepted clean retained origin-domain TP project source; local provenance only",
+    "source_directory": "non-csa-qualification-v2/tp/source",
+    "source_binding_sha256": "93d50ff225cb798aef916c4cbfda835e7de4f4ada4c30c03808e4d9a01834f05",
+    "aggregate_convention": "SHA-256 compact sorted JSON source_files list (path/sha256/size), UTF-8, no newline",
+    "local_artifact_metadata_only": true
+  },
+  {
+    "record": "non-csa-v2-trex-ranked-and-prepared-verifier-source",
+    "urls": [],
+    "files": [
+      {
+        "path": "non-csa-qualification-v2/trex/source-manifest.json",
+        "bytes": 19058,
+        "sha256": "5f0562f235577a641823eb25e65b8c4e0c801d785879f20853567afbd90d14b9"
+      },
+      {
+        "path": "non-csa-qualification-v2/trex/candidate.patch",
+        "bytes": 101423,
+        "sha256": "1c90951fea1e4088d32becc128e44b424e67ec21f36792480884e76d0c9daaec"
+      }
+    ],
+    "scope": "accepted clean T-REX preparation/fixed-transfer-cap ranked/prepared-verifier project source; local provenance only",
+    "source_directory": "non-csa-qualification-v2/trex/candidate",
+    "source_binding_sha256": "8e7c7d621149272f7e2323807f0e13b5ebef4888746e9294c6c16e907d13a2d8",
+    "aggregate_convention": "SHA256 compact sorted JSON filename/hash mapping, UTF8, no newline",
+    "local_artifact_metadata_only": true
+  },
+  {
+    "record": "non-csa-v2-trex-shadow-reporting-source",
+    "urls": [],
+    "files": [
+      {
+        "path": "non-csa-qualification-v2/trex/source-v2-manifest.json",
+        "bytes": 17987,
+        "sha256": "e3d7d0975961364ff9fc9d442f569401ab67f8290289b6fb9f5693567e336559"
+      },
+      {
+        "path": "non-csa-qualification-v2/trex/shadow-reporting-v2.patch",
+        "bytes": 12203,
+        "sha256": "4143f7ef98ed38f370e43e316d1958ee6f1dfd8aa4018ff74142dbfe28b11883"
+      }
+    ],
+    "scope": "accepted checked saturating shadow-reporting delta; actual policy/API unchanged; local provenance only",
+    "source_directory": "non-csa-qualification-v2/trex/candidate-v2",
+    "source_binding_sha256": "51eedfe547c4dece8244485c08d65800166af70924e0d2c3e1dd64a998bdf6b4",
+    "aggregate_convention": "SHA256 UTF8 compact sorted JSON filename/hash mapping, no newline",
+    "local_artifact_metadata_only": true
   }
 ]

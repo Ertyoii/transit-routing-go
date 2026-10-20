@@ -24,11 +24,22 @@ type trexSegment struct {
 
 func (x *TREXIndex) unpackTREX(node *trexNode, exit int, egress *paper.Path, departure int64, charge func() error) (model.Journey, []int, error) {
 	j := model.Journey{Legs: []model.Leg{}}
+	ids, err := x.traceTREX(node, exit, egress, departure, charge, func(leg model.Leg) {
+		j.Legs = append(j.Legs, leg)
+	})
+	return j, ids, err
+}
+
+// traceTREX preserves the ordered node/leg charging protocol for both consumers.
+// Queries and snapshot expansion materialize raw legs through emit. Promoting
+// customization needs only transfer IDs and passes nil, avoiding the discarded
+// raw journey while retaining every per-leg charge and cancellation boundary.
+func (x *TREXIndex) traceTREX(node *trexNode, exit int, egress *paper.Path, departure int64, charge func() error, emit func(model.Leg)) ([]int, error) {
 	nodes := []*trexNode{}
 	ids := []int{}
 	for n := node; n != nil; n = n.parent {
 		if e := charge(); e != nil {
-			return j, ids, e
+			return ids, e
 		}
 		nodes = append(nodes, n)
 	}
@@ -43,16 +54,18 @@ func (x *TREXIndex) unpackTREX(node *trexNode, exit int, egress *paper.Path, dep
 			if e := charge(); e != nil {
 				return e
 			}
-			j.Legs = append(j.Legs, model.Leg{Kind: "walk", Ref: w.ID, Departure: at, Arrival: at + w.Duration})
+			if emit != nil {
+				emit(model.Leg{Kind: "walk", Ref: w.ID, Departure: at, Arrival: at + w.Duration})
+			}
 			at += w.Duration
 		}
 		return nil
 	}
 	if len(nodes) == 0 {
-		return j, ids, appendWalk(egress, departure)
+		return ids, appendWalk(egress, departure)
 	}
 	if e := appendWalk(nodes[0].access, departure); e != nil {
-		return j, ids, e
+		return ids, e
 	}
 	for i, n := range nodes {
 		last := exit
@@ -60,27 +73,29 @@ func (x *TREXIndex) unpackTREX(node *trexNode, exit int, egress *paper.Path, dep
 			last = x.edges[nodes[i+1].edge].exit
 		}
 		if last < n.board || last >= len(x.base.trips[n.trip].cs) {
-			return j, ids, fmt.Errorf("T-REX internal: invalid witness segment")
+			return ids, fmt.Errorf("T-REX internal: invalid witness segment")
 		}
 		for pos := n.board; pos <= last; pos++ {
 			if e := charge(); e != nil {
-				return j, ids, e
+				return ids, e
 			}
 			c := x.base.trips[n.trip].cs[pos]
-			j.Legs = append(j.Legs, model.Leg{Kind: "ride", Ref: c.ID, Departure: c.Departure, Arrival: c.Arrival})
+			if emit != nil {
+				emit(model.Leg{Kind: "ride", Ref: c.ID, Departure: c.Departure, Arrival: c.Arrival})
+			}
 		}
 		at := x.base.trips[n.trip].cs[last].Arrival
 		if i+1 < len(nodes) {
 			id := nodes[i+1].edge
 			ids = append(ids, id)
 			if e := appendWalk(x.edges[id].walk, at); e != nil {
-				return j, ids, e
+				return ids, e
 			}
 		} else if e := appendWalk(egress, at); e != nil {
-			return j, ids, e
+			return ids, e
 		}
 	}
-	return j, ids, nil
+	return ids, nil
 }
 
 func (x *TREXIndex) customizeTREX(ctx context.Context) error {
@@ -225,7 +240,7 @@ func (x *TREXIndex) eventTREX(ctx context.Context, source, board, level, cell in
 					if x.proofs.count == x.cfg.Limits.MaxWitnesses {
 						return fmt.Errorf("T-REX incomplete: traversal witness budget exhausted")
 					}
-					_, ids, e := x.unpackTREX(s.node, p, nil, x.base.trips[source].cs[board].Departure, func() error { return x.tick(ctx) })
+					ids, e := x.traceTREX(s.node, p, nil, x.base.trips[source].cs[board].Departure, func() error { return x.tick(ctx) }, nil)
 					if e != nil {
 						return e
 					}

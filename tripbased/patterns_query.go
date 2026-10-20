@@ -165,6 +165,12 @@ func (x *PatternIndex) searchGraph(ctx context.Context, input model.Query, assem
 // The optional checker belongs only to an explicitly scoped experimental
 // wrapper. Ordinary and scalable TP retain their original capability checks.
 func (x *PatternIndex) searchGraphChecked(ctx context.Context, input model.Query, assemble func(model.Query, map[PatternEdge]bool, *PatternQueryStats, func() error) error, checker func(context.Context, model.Query) (model.Query, error)) (out PatternResult, err error) {
+	return x.searchGraphWithSourceDomain(ctx, input, assemble, checker, nil)
+}
+
+// Only a completed distinct source-domain index can create a nonnil permit.
+// Legacy entrypoints always supply nil and retain their complete-index guard.
+func (x *PatternIndex) searchGraphWithSourceDomain(ctx context.Context, input model.Query, assemble func(model.Query, map[PatternEdge]bool, *PatternQueryStats, func() error) error, checker func(context.Context, model.Query) (model.Query, error), permit *patternSourceDomainPermit) (out PatternResult, err error) {
 	out.Journeys = []model.Journey{}
 	out.Graph = []PatternEdge{}
 	defer func() {
@@ -177,9 +183,15 @@ func (x *PatternIndex) searchGraphChecked(ctx context.Context, input model.Query
 	if err = ctx.Err(); err != nil {
 		return
 	}
-	if !x.Complete() {
-		err = fmt.Errorf("Transfer Patterns incomplete index cannot answer queries")
-		return
+	if permit == nil {
+		if !x.Complete() {
+			err = fmt.Errorf("Transfer Patterns incomplete index cannot answer queries")
+			return
+		}
+	} else {
+		if err = permit.check(x, input); err != nil {
+			return
+		}
 	}
 	if checker == nil {
 		checker = x.base.checkQuery

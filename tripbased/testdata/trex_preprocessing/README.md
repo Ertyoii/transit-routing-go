@@ -1,0 +1,1 @@
+Literal synthetic one- and two-transfer proof fixtures, authored for this experiment. CC0-1.0; see ../LICENSE-CC0.txt. Expected raw leg clocks and transfer IDs are fixed independently of router outputs. Both fixtures have nonzero source boarding/final exit and two raw walking edges per transfer.

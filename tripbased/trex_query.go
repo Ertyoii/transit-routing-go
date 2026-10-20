@@ -54,6 +54,11 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 		}
 	}()
 	bounded := mode == "bounded-walking-tb"
+	// Role-filtered ranked search is an opt-in candidate. Its external
+	// certificate still requires replay and complete independent enumeration;
+	// original unrestricted customization is not a cap-preservation proof.
+	roleCaps := bounded || mode == "overlay-role-caps"
+	overlay := mode == "overlay" || mode == "overlay-role-caps"
 	if bounded || capCertificate {
 		err = x.checkTREXResources(ctx, q)
 	} else {
@@ -124,7 +129,7 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 		}
 		at := q.Departure + w.Duration
 		if w.To == q.Destination {
-			if at <= q.LatestArrival && (!bounded || w.Duration <= q.Walking.Direct) {
+			if at <= q.LatestArrival && (!roleCaps || w.Duration <= q.Walking.Direct) {
 				j, _, e := x.unpackTREX(nil, 0, w, q.Departure, charge)
 				if e != nil {
 					err = e
@@ -136,7 +141,7 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 			}
 			continue
 		}
-		if q.MaxBoardings == 0 || at > q.LatestArrival || bounded && w.Duration > q.Walking.Access {
+		if q.MaxBoardings == 0 || at > q.LatestArrival || roleCaps && w.Duration > q.Walking.Access {
 			continue
 		}
 		for _, o := range x.base.at[w.To] {
@@ -169,7 +174,7 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 	for round := 1; round <= q.MaxBoardings && len(queue) > 0; round++ {
 		out.Stats.Rounds++
 		scan := queue
-		if mode == "overlay" {
+		if overlay {
 			scan = []trexSegment{}
 			for _, s := range queue {
 				for pos := s.begin; pos < s.end; {
@@ -195,7 +200,7 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 		var egress *paper.Path
 		// All target relaxations precede all transfer relaxations in a round.
 		for _, s := range scan {
-			if mode == "overlay" && x.cells[x.ids[x.base.trips[s.trip].cs[s.begin].To]] != targetCell {
+			if overlay && x.cells[x.ids[x.base.trips[s.trip].cs[s.begin].To]] != targetCell {
 				continue
 			}
 			for i := s.begin; i < s.end; i++ {
@@ -211,7 +216,7 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 					break
 				}
 				p := x.walkMap[x.ids[c.To]][target]
-				if p != nil && (!bounded || p.Duration <= q.Walking.Egress) && c.Arrival+p.Duration < arrival {
+				if p != nil && (!roleCaps || p.Duration <= q.Walking.Egress) && c.Arrival+p.Duration < arrival {
 					arrival = c.Arrival + p.Duration
 					found = s.node
 					exit = i
@@ -242,7 +247,7 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 				continue
 			}
 			level := 0
-			if mode == "overlay" {
+			if overlay {
 				level = s.level
 			} else {
 				for pos := s.begin; pos < s.end; pos++ {
@@ -263,7 +268,7 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 				}
 				out.Stats.TransferVisits++
 				edge := x.edges[id]
-				if bounded && (edge.walk.Duration > q.Walking.Transfer || edge.walk.To == q.Destination) {
+				if roleCaps && (edge.walk.Duration > q.Walking.Transfer || edge.walk.To == q.Destination) {
 					continue
 				}
 				if mode == "rank-test" {

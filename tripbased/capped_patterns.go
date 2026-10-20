@@ -54,18 +54,21 @@ type DestinationCappedPatternStats struct {
 	ProfileJourneys      int `json:"profile_journeys"`
 }
 type DestinationCappedPatternSnapshot struct {
-	ProfileWork          []DestinationCappedProfileWork `json:"profile_work,omitempty"`
-	Method               string                         `json:"method"`
-	SourceDatasetID      string                         `json:"source_dataset_id"`
-	ConditionedDatasetID string                         `json:"conditioned_dataset_id"`
-	RemovedOutgoingWalks int                            `json:"removed_outgoing_destination_walks"`
-	Complete             bool                           `json:"complete"`
-	Error                string                         `json:"error,omitempty"`
-	Config               DestinationCappedPatternConfig `json:"config"`
-	Stats                DestinationCappedPatternStats  `json:"stats"`
-	Patterns             PatternSnapshot                `json:"patterns"`
+	Retained             *DestinationRetainedCappedSnapshot `json:"retained,omitempty"`
+	ProfileWork          []DestinationCappedProfileWork     `json:"profile_work,omitempty"`
+	Method               string                             `json:"method"`
+	SourceDatasetID      string                             `json:"source_dataset_id"`
+	ConditionedDatasetID string                             `json:"conditioned_dataset_id"`
+	RemovedOutgoingWalks int                                `json:"removed_outgoing_destination_walks"`
+	Complete             bool                               `json:"complete"`
+	Error                string                             `json:"error,omitempty"`
+	Config               DestinationCappedPatternConfig     `json:"config"`
+	Stats                DestinationCappedPatternStats      `json:"stats"`
+	Patterns             PatternSnapshot                    `json:"patterns"`
 }
 type DestinationCappedPatternIndex struct {
+	method                  string
+	retained                *DestinationRetainedCappedSnapshot
 	p                       *PatternIndex
 	cfg                     DestinationCappedPatternConfig
 	sourceID, conditionedID string
@@ -82,6 +85,12 @@ func (x *DestinationCappedPatternIndex) Snapshot() DestinationCappedPatternSnaps
 		return DestinationCappedPatternSnapshot{Method: fixedCapPatternMethod}
 	}
 	s := DestinationCappedPatternSnapshot{Method: fixedCapPatternMethod, SourceDatasetID: x.sourceID, ConditionedDatasetID: x.conditionedID, RemovedOutgoingWalks: x.removed, Complete: x.complete, Error: x.err, Config: x.cfg, Stats: x.stats, ProfileWork: append([]DestinationCappedProfileWork(nil), x.profileWork...)}
+	if x.method != "" {
+		s.Method = x.method
+	}
+	if x.retained != nil {
+		s.Retained = x.retained.clone()
+	}
 	if x.p != nil {
 		s.Patterns = x.p.Snapshot()
 	}
@@ -92,6 +101,12 @@ func (x *DestinationCappedPatternIndex) CostSummary() json.RawMessage {
 		return json.RawMessage("null")
 	}
 	v := map[string]any{"method": fixedCapPatternMethod, "source_dataset_id": x.sourceID, "conditioned_dataset_id": x.conditionedID, "removed_outgoing_destination_walks": x.removed, "complete": x.complete, "error": x.err, "config": x.cfg, "stats": x.stats}
+	if x.method != "" {
+		v["method"] = x.method
+	}
+	if x.retained != nil {
+		v["retained"] = map[string]any{"config": x.retained.Config, "stats": x.retained.Stats, "profile_records": len(x.retained.Profiles)}
+	}
 	if x.p != nil {
 		v["patterns"] = x.p.CostSummary()
 	}
@@ -105,20 +120,44 @@ func (x *DestinationCappedPatternIndex) CostSummary() json.RawMessage {
 // v5 preprocessing. Every source and exact feasible access breakpoint is
 // profiled using the native role-capped TB kernel, with fail-closed budgets.
 func BuildDestinationCappedPatterns(ctx context.Context, d model.Dataset, c DestinationCappedPatternConfig) (x *DestinationCappedPatternIndex, err error) {
+	return buildDestinationCappedPatterns(ctx, d, c, nil)
+}
+
+func buildDestinationCappedPatterns(ctx context.Context, d model.Dataset, c DestinationCappedPatternConfig, retained *DestinationRetainedCappedConfig) (x *DestinationCappedPatternIndex, err error) {
+	return buildDestinationCappedPatternsForDomain(ctx, d, c, retained, nil)
+}
+
+func buildDestinationCappedPatternsForDomain(ctx context.Context, d model.Dataset, c DestinationCappedPatternConfig, retained *DestinationRetainedCappedConfig, domain *sourceDomainBuild) (x *DestinationCappedPatternIndex, err error) {
 	x = &DestinationCappedPatternIndex{cfg: c, sourceID: d.ID}
+	if retained != nil {
+		x.method = fixedCapRetainedPatternMethod
+		rc := *retained
+		rc.SourceOrder = append([]string(nil), retained.SourceOrder...)
+		x.retained = &DestinationRetainedCappedSnapshot{Config: rc}
+	}
 	p := &PatternIndex{cfg: c.Patterns, dags: map[string]*PatternDAG{}, prefix: map[string]map[patternPrefix]int{}, seen: map[string]bool{}, connections: map[string]model.Connection{}, footpaths: map[string]model.Footpath{}, snap: PatternSnapshot{Profile: fixedCapPatternMethod, Config: c.Patterns, Witnesses: []PatternWitness{}, PhasesNS: map[string]int64{}}}
 	x.p = p
+	if retained != nil {
+		p.snap.Profile = x.method
+	}
 	defer func() {
-		x.complete = err == nil
+		x.complete = err == nil && domain == nil
 		p.snap.Complete = x.complete
 		if err != nil {
 			x.err = err.Error()
+			p.snap.Error = x.err
+		} else if domain != nil {
+			x.err = "fixed-cap TP global index incomplete: explicit source domain only"
 			p.snap.Error = x.err
 		}
 		p.prefix = nil
 		p.seen = nil
 	}()
 	if err = ctx.Err(); err != nil {
+		return
+	}
+	if retained != nil && (retained.MaxPendingSegments < 1 || retained.MaxSourceSeeds < 1) {
+		err = fmt.Errorf("fixed-cap retained TP requires positive pending-segment and source-seed budgets")
 		return
 	}
 	pc, fc := c.Patterns, c.Patterns.Profile
@@ -198,8 +237,14 @@ func BuildDestinationCappedPatterns(ctx context.Context, d model.Dataset, c Dest
 		p.footpaths[v.ID] = v
 	}
 	start = time.Now()
-	err = x.buildProfiles(ctx)
-	p.snap.PhasesNS["fixed_cap_native_query_profiles"] = time.Since(start).Nanoseconds()
+	if retained == nil {
+		err = x.buildProfiles(ctx)
+		p.snap.PhasesNS["fixed_cap_native_query_profiles"] = time.Since(start).Nanoseconds()
+	} else {
+		p.snap.Profile = fixedCapRetainedPatternMethod
+		err = x.buildRetainedCappedProfiles(ctx, domain)
+		p.snap.PhasesNS["fixed_cap_retained_exact_event_profiles"] = time.Since(start).Nanoseconds()
+	}
 	if err != nil {
 		return
 	}
@@ -216,6 +261,9 @@ func BuildDestinationCappedPatterns(ctx context.Context, d model.Dataset, c Dest
 				stop = t.cs[pos-1].To
 			}
 			p.incident[p.base.ids[stop]] = append(p.incident[p.base.ids[stop]], patternOccurrence{li, pos})
+			if domain != nil {
+				domain.occurrences++
+			}
 			if p.snap.Stats.DirectEntries > pc.MaxDirectEntries-len(line.trips) {
 				err = fmt.Errorf("fixed-cap TP incomplete: direct incidence budget")
 				return
@@ -224,6 +272,12 @@ func BuildDestinationCappedPatterns(ctx context.Context, d model.Dataset, c Dest
 		}
 	}
 	p.snap.PhasesNS["direct_incidence"] = time.Since(start).Nanoseconds()
+	if domain != nil {
+		if err = ctx.Err(); err != nil {
+			return
+		}
+		domain.finalized = true
+	}
 	return
 }
 
