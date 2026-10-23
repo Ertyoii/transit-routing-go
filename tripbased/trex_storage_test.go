@@ -39,7 +39,7 @@ func TestTREXExactStorageAndAccounting(t *testing.T) {
 		}
 		st := sx.Stats.Storage
 		m := len(sx.Transfers)
-		if !st.TransferCountComplete || st.CountedTransfers != m || st.EdgeCapacity != m || st.RankCapacity != m || st.AdjacencyCapacity != m || st.OverlayCapacity != sx.Stats.OverlayEntries {
+		if !st.TransferCountComplete || st.CountedTransfers != m || st.EdgeCapacity != m || st.RankCapacity != m || st.AdjacencyCapacity != 0 || st.OverlayCapacity+st.ImplicitOverlayEntries != sx.Stats.OverlayEntries {
 			t.Fatal(n, st)
 		}
 		if sx.Stats.Work != sa.Stats.Work+st.TransferCountWork+st.OverlayCountWork {

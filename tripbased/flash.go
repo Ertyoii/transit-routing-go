@@ -119,6 +119,7 @@ type FlashTransferDiagnostics struct {
 }
 
 type FlashSnapshot struct {
+	WalkingClosureLimit    *int64                    `json:"walking_closure_limit,omitempty"` // nil means the complete metric
 	TransferDiagnostics    *FlashTransferDiagnostics `json:"transfer_diagnostics,omitempty"`
 	OmittedTransferRecords int                       `json:"omitted_transfer_records,omitempty"`
 	TransferConstruction   string                    `json:"transfer_construction,omitempty"`
@@ -184,6 +185,10 @@ func (w *flashWork) run(profile bool) error {
 func (x *FlashIndex) Complete() bool { return x.snap.Complete }
 func (x *FlashIndex) Snapshot() FlashSnapshot {
 	s := x.snap
+	if s.WalkingClosureLimit != nil {
+		limit := *s.WalkingClosureLimit
+		s.WalkingClosureLimit = &limit
+	}
 	if x.cfg.Semantics == "static_stop_pair_v1" {
 		diagnostic := x.ruleTransferDiagnostics()
 		s.TransferDiagnostics = &diagnostic
@@ -228,7 +233,13 @@ func (x *FlashIndex) Snapshot() FlashSnapshot {
 func BuildFlash(ctx context.Context, d model.Dataset, c FlashConfig) (*FlashIndex, error) {
 	return buildFlash(ctx, d, c, nil)
 }
-func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(FlashWitness) error) (x *FlashIndex, err error) {
+func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(FlashWitness) error) (*FlashIndex, error) {
+	return buildFlashWithWalkingScope(ctx, d, c, sink, nil)
+}
+
+// Only the destination/fixed-role TP builders may supply a bounded scope.
+// Public FLASH and ordinary TP retain their complete nonbinding metric.
+func buildFlashWithWalkingScope(ctx context.Context, d model.Dataset, c FlashConfig, sink func(FlashWitness) error, walking *model.WalkingLimits) (x *FlashIndex, err error) {
 	x = &FlashIndex{profileSink: sink, cfg: c, ids: map[string]int{}, snap: FlashSnapshot{Profile: "flash_tb_positive_transitive_nonbinding_v1", Config: c, Transfers: []FlashTransfer{}, Witnesses: []FlashWitness{}, PhasesNS: map[string]int64{}}}
 	defer func() {
 		x.snap.Complete = err == nil
@@ -318,12 +329,22 @@ func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(F
 	}
 	w := &flashWork{ctx, x}
 	start := time.Now()
-	if err = x.closeWalks(d, w); err != nil {
+	var closureLimit *int64
+	if walking != nil {
+		limit := max(walking.Access, walking.Transfer, walking.Egress, walking.Direct)
+		closureLimit = &limit
+		x.snap.WalkingClosureLimit = &limit
+	}
+	if err = x.closeWalksWithin(d, w, closureLimit); err != nil {
 		return
 	}
 	x.snap.PhasesNS["walking_closure"] = time.Since(start).Nanoseconds()
 	start = time.Now()
-	x.base, err = New(ctx, d, Config{StrictLineOrder: true, TransferWalkingLimit: x.snap.ClosureDiameter, MaxTransfers: l.MaxTransfers, MaxQueuedSegments: l.MaxQuerySegments})
+	transferLimit := x.snap.ClosureDiameter
+	if walking != nil {
+		transferLimit = walking.Transfer
+	}
+	x.base, err = New(ctx, d, Config{StrictLineOrder: true, TransferWalkingLimit: transferLimit, MaxTransfers: l.MaxTransfers, MaxQueuedSegments: l.MaxQuerySegments})
 	if err != nil {
 		return
 	}
@@ -341,9 +362,9 @@ func buildFlash(ctx context.Context, d model.Dataset, c FlashConfig, sink func(F
 	}
 	cp := *x.base
 	if c.Semantics == "" {
-		cp.links = make([][][]link, len(cp.trips))
+		cp.links = make([][][]compactLink, len(cp.trips))
 		for ti, t := range cp.trips {
-			cp.links[ti] = make([][]link, len(t.cs))
+			cp.links[ti] = make([][]compactLink, len(t.cs))
 		}
 	}
 	x.cp = &cp

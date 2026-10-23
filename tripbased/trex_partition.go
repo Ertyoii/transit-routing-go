@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"unsafe"
 )
 
 // Walking weak components are indivisible even for directed footpaths. Recursive
@@ -185,21 +186,29 @@ func (x *TREXIndex) partitionTREX(ctx context.Context) error {
 func (x *TREXIndex) buildTREXOverlays(ctx context.Context) error {
 	n := x.offsets[len(x.offsets)-1]
 	for level := 0; level <= x.cfg.Levels; level++ {
-		o := trexOverlay{starts: make([]int, n+1)}
+		o := trexOverlay{starts: make([]int, n+1), implicit: level == 0}
+		// A complete level-zero overlay is the identity sequence 0..m-1.
+		// Higher overlays use compact IDs when all IDs fit, else native ints.
+		nativeIDs := uint64(x.edgeCount()) > uint64(1<<32)
 		if x.cfg.ExactStorage {
 			count, e := x.exactOverlayCapacity(ctx, level)
 			if e != nil {
 				return e
 			}
-			if count > 0 {
-				o.edges = make([]int, 0, count)
+			if count > 0 && !o.implicit {
+				if nativeIDs {
+					o.wide = make([]int, 0, count)
+				} else {
+					o.edges = make([]uint32, 0, count)
+				}
 			}
 		}
 		for ti, t := range x.base.trips {
 			for i := range t.cs {
 				event := x.offsets[ti] + i
-				o.starts[event] = len(o.edges)
-				for _, id := range x.byEvent[ti][i] {
+				o.starts[event] = o.length()
+				row := x.byEvent[ti][i]
+				for id := row.begin; id < row.end; id++ {
 					if e := x.tick(ctx); e != nil {
 						return e
 					}
@@ -207,20 +216,30 @@ func (x *TREXIndex) buildTREXOverlays(ctx context.Context) error {
 						if x.snap.Stats.OverlayEntries == x.cfg.Limits.MaxOverlayEntries {
 							return fmt.Errorf("T-REX incomplete: overlay entry budget exhausted")
 						}
-						if x.cfg.ExactStorage && len(o.edges) == cap(o.edges) {
+						if x.cfg.ExactStorage && !o.implicit && o.length() == o.capacity() {
 							return fmt.Errorf("T-REX internal: exact overlay count/fill mismatch")
 						}
-						o.edges = append(o.edges, id)
+						if o.implicit {
+							o.implicitCount++
+						} else if nativeIDs {
+							o.wide = append(o.wide, id)
+						} else {
+							o.edges = append(o.edges, uint32(id))
+						}
 						x.snap.Stats.OverlayEntries++
 					}
 				}
 			}
 		}
-		o.starts[n] = len(o.edges)
-		if x.cfg.ExactStorage && len(o.edges) != cap(o.edges) {
+		o.starts[n] = o.length()
+		if x.cfg.ExactStorage && !o.implicit && o.length() != o.capacity() {
 			return fmt.Errorf("T-REX internal: exact overlay count/fill mismatch")
 		}
-		x.snap.Stats.Storage.OverlayCapacity += cap(o.edges)
+		x.snap.Stats.Storage.OverlayCapacity += o.capacity()
+		if o.implicit {
+			x.snap.Stats.Storage.ImplicitOverlayEntries += o.implicitCount
+		}
+		x.snap.Stats.Storage.OverlayBytes += uint64(cap(o.edges))*4 + uint64(cap(o.wide))*uint64(unsafe.Sizeof(int(0)))
 		x.overlays = append(x.overlays, o)
 		succ := make([]int, n)
 		for ti, t := range x.base.trips {

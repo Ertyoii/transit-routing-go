@@ -157,7 +157,7 @@ func TestTREXProofRejectsMalformedEncodingAndGraphReferences(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, change := range []func(*trexProof){func(p *trexProof) { p.level = 1 }, func(p *trexProof) { p.board = 2 }, func(p *trexProof) { p.exit = 2 }, func(p *trexProof) { p.ids[0] = len(x.edges) }, func(p *trexProof) { p.count = 0 }} {
+	for _, change := range []func(*trexProof){func(p *trexProof) { p.level = 1 }, func(p *trexProof) { p.board = 2 }, func(p *trexProof) { p.exit = 2 }, func(p *trexProof) { p.ids[0] = x.edgeCount() }, func(p *trexProof) { p.count = 0 }} {
 		bad := p
 		change(&bad)
 		if _, err := x.expandTREXProof(bad); err == nil {

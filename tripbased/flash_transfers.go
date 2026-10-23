@@ -137,6 +137,7 @@ func (x *FlashIndex) canonicalRound(prev []flashLabel, w *flashWork) ([]flashLab
 type flashKey struct{ from, exit, to, board int }
 
 func (x *FlashIndex) transULTRA(w *flashWork) error {
+	linkBuilder := transferLinkBuilder{data: &x.cp.linkData}
 	keys := map[flashKey]int{}
 	x.transferIDs = make([][][]int, len(x.base.trips))
 	for i, t := range x.base.trips {
@@ -200,7 +201,7 @@ func (x *FlashIndex) transULTRA(w *flashWork) error {
 				}
 				id := len(x.snap.Transfers)
 				keys[k] = id
-				x.cp.links[k.from][k.exit] = append(x.cp.links[k.from][k.exit], link{k.to, k.board, walk})
+				x.cp.links[k.from][k.exit] = append(x.cp.links[k.from][k.exit], linkBuilder.pack(link{k.to, k.board, walk}))
 				x.transferIDs[k.from][k.exit] = append(x.transferIDs[k.from][k.exit], id)
 				raw := []string{}
 				for _, e := range walk.Edges {
@@ -219,10 +220,10 @@ func (x *FlashIndex) transULTRA(w *flashWork) error {
 				order[j] = j
 			}
 			sort.Slice(order, func(a, b int) bool {
-				u, v := links[order[a]], links[order[b]]
+				u, v := x.cp.linkData.unpack(links[order[a]]), x.cp.linkData.unpack(links[order[b]])
 				return x.eventOffset[u.trip]+u.board < x.eventOffset[v.trip]+v.board
 			})
-			ll := make([]link, len(links))
+			ll := make([]compactLink, len(links))
 			ii := make([]int, len(ids))
 			for j, k := range order {
 				ll[j] = links[k]

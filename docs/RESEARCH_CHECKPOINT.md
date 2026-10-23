@@ -1,5 +1,10 @@
 # Composed research checkpoint
 
+For the subsequent compatible V2 source composition and its fresh verification
+scope, see [V2_RUNTIME_INTEGRATION.md](V2_RUNTIME_INTEGRATION.md). The historical
+source maps and measurement boundaries below remain evidence for their original
+checkpoints, not a byte-identity claim for the integrated library.
+
 This module composes reviewed stages after v0.1.0-pre.2. The benchmark project supplies aggregate results and portable synthetic reproductions. Real feeds, derived walking graphs, real query rosters and full-model itineraries are excluded.
 
 ## Implementation changes

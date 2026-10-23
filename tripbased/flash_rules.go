@@ -31,7 +31,8 @@ func (x *FlashIndex) ruleTransfers(w *flashWork) error {
 		x.ruleOffsets[ti] = make([]int, len(t.cs))
 		for i, links := range x.cp.links[ti] {
 			x.ruleOffsets[ti][i] = x.ruleTransferCount
-			for _, tr := range links {
+			for _, packed := range links {
+				tr := x.cp.linkData.unpack(packed)
 				if e := w.tick(); e != nil {
 					return e
 				}
@@ -84,7 +85,8 @@ func (x *FlashIndex) ruleTransferSnapshot() []FlashTransfer {
 	out := make([]FlashTransfer, 0, x.ruleTransferCount)
 	for ti, t := range x.cp.trips {
 		for i, links := range x.cp.links[ti] {
-			for j, tr := range links {
+			for j, packed := range links {
+				tr := x.cp.linkData.unpack(packed)
 				raw := []string{}
 				for _, e := range tr.walk.Edges {
 					raw = append(raw, e.ID)
@@ -151,7 +153,8 @@ func (x *FlashIndex) suffixFlags(w *flashWork) error {
 				dst[cell/64] |= uint64(1) << uint(cell%64)
 			}
 		}
-		for _, tr := range x.cp.links[ev.trip][ev.pos] {
+		for _, packed := range x.cp.links[ev.trip][ev.pos] {
+			tr := x.cp.linkData.unpack(packed)
 			if e := w.tick(); e != nil {
 				return e
 			}
@@ -169,7 +172,8 @@ func (x *FlashIndex) suffixFlags(w *flashWork) error {
 	}
 	for ti, exits := range x.cp.links {
 		for i, links := range exits {
-			for j, tr := range links {
+			for j, packed := range links {
+				tr := x.cp.linkData.unpack(packed)
 				if e := w.tick(); e != nil {
 					return e
 				}
@@ -287,7 +291,8 @@ func (x *FlashIndex) ruleProfile(source int, departure int64, w *flashWork) erro
 				if n == k {
 					continue
 				}
-				for _, tr := range x.cp.links[ti][i] {
+				for _, packed := range x.cp.links[ti][i] {
+					tr := x.cp.linkData.unpack(packed)
 					if e := enqueue(n+1, tr.trip, tr.board, path, tr.walk); e != nil {
 						return e
 					}

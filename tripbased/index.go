@@ -47,13 +47,14 @@ type link struct {
 	walk        *paper.Path
 }
 type Index struct {
-	p     *paper.Profile
-	cfg   Config
-	trips []trip
-	lines []line
-	at    map[string][]occurrence
-	links [][][]link
-	prep  Preparation
+	p        *paper.Profile
+	cfg      Config
+	trips    []trip
+	lines    []line
+	at       map[string][]occurrence
+	links    [][][]compactLink
+	linkData transferLinkData
+	prep     Preparation
 }
 
 func (x *Index) Preparation() Preparation { return x.prep }
@@ -174,8 +175,9 @@ func newIndex(ctx context.Context, d model.Dataset, cfg Config, transfers bool) 
 	if !transfers {
 		return x, nil
 	}
-	x.links = make([][][]link, len(x.trips))
+	x.links = make([][][]compactLink, len(x.trips))
 	storage := transferLinkStorage{limit: cfg.MaxTransfers}
+	linkBuilder := transferLinkBuilder{data: &x.linkData}
 	// Query-independent closure: no destination is absorbing during preparation.
 	// Legacy Search requires egress >= intermediate walk so a path passing its
 	// destination is dominated by terminating there. SearchCappedWalking instead
@@ -183,7 +185,7 @@ func newIndex(ctx context.Context, d model.Dataset, cfg Config, transfers bool) 
 	prepQuery := model.Query{AccessibleOnly: cfg.AccessibleOnly, TransferBuffer: cfg.TransferBuffer, Walking: &model.WalkingLimits{Transfer: cfg.TransferWalkingLimit}}
 	walker := p.Walker(prepQuery)
 	for ti, t := range x.trips {
-		x.links[ti] = make([][]link, len(t.cs))
+		x.links[ti] = make([][]compactLink, len(t.cs))
 		if !p.TripAllowed(prepQuery, t.id) {
 			continue
 		}
@@ -232,7 +234,7 @@ func newIndex(ctx context.Context, d model.Dataset, cfg Config, transfers bool) 
 					if x.prep.Transfers == cfg.MaxTransfers {
 						return nil, fmt.Errorf("Trip-Based preprocessing incomplete: transfer budget %d exhausted", cfg.MaxTransfers)
 					}
-					storage.append(link{u, o.position, w})
+					storage.append(linkBuilder.pack(link{u, o.position, w}))
 					x.prep.Transfers++
 				}
 			}

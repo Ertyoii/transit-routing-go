@@ -237,3 +237,17 @@ func (c *Checker) checkTransfer(a, b model.Connection, fallback int64) (bool, in
 	}
 	return true, fallback, nil
 }
+
+// DatasetFingerprint identifies the checker's owned immutable snapshot. It does
+// not hash or clone the dataset again and exposes no mutable internal tables.
+func (c *Checker) DatasetFingerprint() string { return c.datasetSHA256 }
+
+// Connection and Trip return value copies from the checker-owned snapshot.
+func (c *Checker) Connection(id string) (model.Connection, bool) { v, ok := c.rides[id]; return v, ok }
+func (c *Checker) Trip(id string) (model.Trip, bool)             { v, ok := c.trips[id]; return v, ok }
+
+// TransferDecision applies this checker's independent rule interpretation for
+// presentation features; it is metadata, not a substitute for Check.
+func (c *Checker) TransferDecision(from, to model.Connection, fallback int64) (bool, int64, error) {
+	return c.checkTransfer(from, to, fallback)
+}

@@ -259,7 +259,8 @@ func (p *retainedRuleProfile) propagate() error {
 				if n == k {
 					continue
 				}
-				for _, tr := range x.cp.links[seg.trip][i] {
+				for _, packed := range x.cp.links[seg.trip][i] {
+					tr := x.cp.linkData.unpack(packed)
 					if e := p.w.tick(); e != nil {
 						return e
 					}

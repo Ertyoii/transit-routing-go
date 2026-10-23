@@ -21,12 +21,69 @@ type PreferenceGroup struct {
 	Preferences []Preference `json:"preferences"`
 }
 type ChoiceConfig struct {
-	MaxSubsets    int               `json:"max_subsets"`
-	MaxCandidates int               `json:"max_candidates"`
-	Groups        []PreferenceGroup `json:"groups"`
+	FiniteSafe     *FiniteSafeConfig `json:"finite20_safe,omitempty"`
+	HybridFill     *HybridFillConfig `json:"absolute_hybrid_fill,omitempty"`
+	LeanDelivery   bool              `json:"lean_delivery,omitempty"`
+	DeliveryPolicy string            `json:"delivery_policy,omitempty"`
+	DeliveryLimits []int             `json:"delivery_limits,omitempty"`
+	Bounded        *BoundedConfig    `json:"bounded,omitempty"`
+	MaxSubsets     int               `json:"max_subsets"`
+	MaxCandidates  int               `json:"max_candidates"`
+	Groups         []PreferenceGroup `json:"groups"`
 }
 
+func nestedDeliveryConfig(c ChoiceConfig) bool { return c.FiniteSafe != nil || c.HybridFill != nil }
+
 func (c ChoiceConfig) Validate() error {
+	if c.FiniteSafe != nil {
+		if c.HybridFill != nil || c.Bounded != nil || !c.LeanDelivery || c.DeliveryPolicy != "finite20_safe_v1" || len(c.DeliveryLimits) != 1 || c.DeliveryLimits[0] != 3 || len(c.Groups) != 0 || c.MaxCandidates != c.FiniteSafe.MaxCandidates || c.MaxSubsets != c.FiniteSafe.MaxStates {
+			return fmt.Errorf("finite20-safe named config/limits/guards are inconsistent")
+		}
+		return c.FiniteSafe.Validate()
+	}
+	if c.HybridFill != nil {
+		if c.Bounded != nil || !c.LeanDelivery || c.DeliveryPolicy != "bounded_absolute_hybrid_fill_v1" || len(c.DeliveryLimits) != 1 || len(c.Groups) != 0 || c.MaxCandidates != c.HybridFill.Base.MaxCandidates || c.MaxSubsets != c.HybridFill.Base.MaxSubsets {
+			return fmt.Errorf("absolute-hybrid fill named config/limits/guards are inconsistent")
+		}
+		if err := c.HybridFill.Validate(); err != nil {
+			return err
+		}
+		if c.DeliveryLimits[0] != c.HybridFill.Base.Bounded.Limits[0] {
+			return fmt.Errorf("absolute-hybrid fill outer/base requested limits differ")
+		}
+		return nil
+	}
+
+	if c.Bounded != nil && c.LeanDelivery {
+		return fmt.Errorf("bounded and legacy lean delivery configurations are mutually exclusive")
+	}
+	if !c.LeanDelivery && (c.DeliveryPolicy != "" || len(c.DeliveryLimits) > 0) {
+		return fmt.Errorf("delivery policy/limits require lean_delivery")
+	}
+	if c.LeanDelivery {
+		if c.DeliveryPolicy != "" && c.DeliveryPolicy != "finite_preferences_v2" && c.DeliveryPolicy != "pattern_anchors_v1" {
+			return fmt.Errorf("invalid lean delivery policy")
+		}
+		prev := 0
+		for _, k := range c.DeliveryLimits {
+			if k < 1 || k > 10 || k <= prev {
+				return fmt.Errorf("lean delivery limits must be increasing in [1,10]")
+			}
+			prev = k
+		}
+		if c.DeliveryPolicy == "pattern_anchors_v1" {
+			if c.MaxCandidates < 1 || c.MaxCandidates > 10000 {
+				return fmt.Errorf("invalid lean candidate guard")
+			}
+			return nil
+		}
+	}
+	if c.Bounded != nil {
+		if c.MaxCandidates < 1 || c.MaxCandidates > 10000 || c.MaxSubsets < 1 || c.MaxSubsets > 10000000 {
+			return fmt.Errorf("invalid bounded candidate/subset limits")
+		}
+		return c.Bounded.Validate()
+	}
 	if c.MaxSubsets < 1 || c.MaxSubsets > 10000000 || c.MaxCandidates < 1 || c.MaxCandidates > 10000 || len(c.Groups) < 1 || len(c.Groups) > 8 {
 		return fmt.Errorf("invalid choice configuration bounds")
 	}
@@ -88,6 +145,18 @@ type Choices struct {
 func (x *Index) EvaluateChoices(ctx context.Context, q model.Query, js []model.Journey, cfg ChoiceConfig) (out Result, err error) {
 	if err = cfg.Validate(); err != nil {
 		return
+	}
+	if cfg.FiniteSafe != nil {
+		return x.EvaluateFiniteSafe(ctx, q, js, cfg)
+	}
+	if cfg.HybridFill != nil {
+		return x.EvaluateHybridFill(ctx, q, js, cfg)
+	}
+	if cfg.Bounded != nil {
+		return x.EvaluateBounded(ctx, q, js, cfg)
+	}
+	if cfg.LeanDelivery {
+		return x.EvaluateLeanChoices(ctx, q, js, cfg)
 	}
 	if err = ctx.Err(); err != nil {
 		return

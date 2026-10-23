@@ -343,7 +343,8 @@ func (s *cappedRetainedSweep) propagate() error {
 				if n == k {
 					continue
 				}
-				for _, tr := range b.cp.links[seg.trip][i] {
+				for _, packed := range b.cp.links[seg.trip][i] {
+					tr := b.cp.linkData.unpack(packed)
 					if e := x.p.tick(s.ctx); e != nil {
 						return e
 					}

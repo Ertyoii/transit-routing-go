@@ -37,6 +37,8 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 		return
 	}
 	p := x.x.p
+	n := len(x.stopIDs)
+	destination := x.stopIDs[q.Destination]
 	if !p.Accessible(q, q.Origin) || !p.Accessible(q, q.Destination) {
 		return
 	}
@@ -67,7 +69,12 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 		out.Journeys = append(out.Journeys, paper.Journey(parent))
 		return nil
 	}
-	previous := map[string]paper.Label{}
+	previous := make([]paper.Label, n)
+	previousSet := make([]bool, n)
+	previousStops := []int{}
+	next := make([]paper.Label, n)
+	nextSet := make([]bool, n)
+	nextStops := []int{}
 	endpoints := []string{}
 	for stop := range forward.distance {
 		endpoints = append(endpoints, stop)
@@ -90,21 +97,25 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 					return
 				}
 			}
-		} else if q.MaxBoardings > 0 && x.x.transit[stop] && forward.distance[stop] <= q.Walking.Access {
+		} else if q.MaxBoardings > 0 && x.transit[x.stopIDs[stop]] && forward.distance[stop] <= q.Walking.Access {
 			edges, e := x.path(forward, stop, &w)
 			if e != nil {
 				return out, e
 			}
-			previous[stop] = paper.Label{Time: at, Parent: (paper.Path{Edges: edges}).Append(nil, q.Departure)}
+			id := x.stopIDs[stop]
+			previousStops = append(previousStops, id)
+			previousSet[id] = true
+			previous[id] = paper.Label{Time: at, Parent: (paper.Path{Edges: edges}).Append(nil, q.Departure)}
 		}
 	}
-	rows := map[string][]paper.Path{}
-	getRow := func(from string) ([]paper.Path, error) {
-		if r, ok := rows[from]; ok {
-			return r, nil
+	rows := make([][]cappedPath, n)
+	rowSet := make([]bool, n)
+	getRow := func(from int, fromName string) ([]cappedPath, error) {
+		if rowSet[from] {
+			return rows[from], nil
 		}
 		out.Stats.RowUses++
-		r := []paper.Path{}
+		r := []cappedPath{}
 		var detour *rawSearch
 		for _, path := range x.rows[from] {
 			if e := w.check(); e != nil {
@@ -125,7 +136,7 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 			}
 			if crosses {
 				if detour == nil {
-					d, e := x.walk(from, q.Walking.Transfer, false, q.Destination, &w)
+					d, e := x.walk(fromName, q.Walking.Transfer, false, q.Destination, &w)
 					out.Stats.WalkSearches++
 					out.Stats.DestinationRepairs++
 					if e != nil {
@@ -141,37 +152,52 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 				if e != nil {
 					return nil, e
 				}
-				path = paper.Path{To: path.To, Duration: duration, Edges: edges}
+				path.Path = paper.Path{To: path.To, Duration: duration, Edges: edges}
 			}
 			r = append(r, path)
 		}
 		rows[from] = r
+		rowSet[from] = true
 		return r, nil
 	}
-	egress := map[string][]model.Footpath{}
-	for boards := 1; boards <= q.MaxBoardings && len(previous) > 0; boards++ {
+	egress := make([][]model.Footpath, n)
+	egressSet := make([]bool, n)
+	backwardDistance := make([]int64, n)
+	backwardSet := make([]bool, n)
+	for name, duration := range backward.distance {
+		id := x.stopIDs[name]
+		backwardDistance[id], backwardSet[id] = duration, true
+	}
+	selected := make([]int, len(x.x.routes))
+	routeIDs := []int{}
+	for boards := 1; boards <= q.MaxBoardings && len(previousStops) > 0; boards++ {
 		if err = w.check(); err != nil {
 			return
 		}
 		out.Stats.Rounds++
-		selected := map[int]int{}
-		for stop := range previous {
+		for _, ri := range routeIDs {
+			selected[ri] = 0
+		}
+		routeIDs = routeIDs[:0]
+		for _, stop := range previousStops {
 			for _, o := range x.at[stop] {
 				if err = w.connection(); err != nil {
 					return
 				}
 				out.Stats.RouteOccurrenceChecks++
-				if old, ok := selected[o.route]; !ok || o.position < old {
-					selected[o.route] = o.position
+				if old := selected[o.route]; old == 0 || o.position+1 < old {
+					if old == 0 {
+						routeIDs = append(routeIDs, o.route)
+					}
+					selected[o.route] = o.position + 1
 				}
 			}
 		}
-		routeIDs := []int{}
-		for id := range selected {
-			routeIDs = append(routeIDs, id)
-		}
 		sort.Ints(routeIDs)
-		next := map[string]paper.Label{}
+		for _, stop := range nextStops {
+			nextSet[stop] = false
+		}
+		nextStops = nextStops[:0]
 		best := paper.Label{Time: bestArrival}
 		for _, ri := range routeIDs {
 			if err = w.check(); err != nil {
@@ -179,17 +205,18 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 			}
 			out.Stats.RouteScans++
 			r := x.x.routes[ri]
-			if !p.TripAllowed(q, r.trips[0].id) {
+			if q.AccessibleOnly && !x.tripAllowed[ri] {
 				continue
 			}
 			current := -1
 			var parent *paper.Node
-			for pos := selected[ri]; pos < len(r.trips[0].cs); pos++ {
+			for pos := selected[ri] - 1; pos < len(r.trips[0].cs); pos++ {
 				if err = w.connection(); err != nil {
 					return
 				}
 				proto := r.trips[0].cs[pos]
-				if l, ok := previous[proto.From]; ok && proto.Pickup && p.Accessible(q, proto.From) {
+				fromID := x.from[ri][pos]
+				if l := previous[fromID]; previousSet[fromID] && proto.Pickup && (!q.AccessibleOnly || x.accessible[fromID]) {
 					lo, hi := 0, len(r.trips)
 					if current >= 0 {
 						hi = current
@@ -220,31 +247,33 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 					continue
 				}
 				parent = paper.Ride(parent, c)
-				if !c.Dropoff || !p.Accessible(q, c.To) {
+				toID := x.to[ri][pos]
+				if !c.Dropoff || q.AccessibleOnly && !x.accessible[toID] {
 					continue
 				}
-				if c.To == q.Destination {
+				if toID == destination {
 					if c.Arrival < best.Time {
 						best = paper.Label{Time: c.Arrival, Parent: parent}
 					}
 					current = -1
 					continue
 				}
-				if duration, ok := backward.distance[c.To]; ok && c.Arrival+duration < best.Time && c.Arrival+duration <= q.LatestArrival {
-					edges, exists := egress[c.To]
-					if !exists {
+				if duration := backwardDistance[toID]; backwardSet[toID] && c.Arrival+duration < best.Time && c.Arrival+duration <= q.LatestArrival {
+					edges := egress[toID]
+					if !egressSet[toID] {
 						edges, err = x.path(backward, c.To, &w)
 						if err != nil {
 							return
 						}
-						egress[c.To] = edges
+						egress[toID] = edges
+						egressSet[toID] = true
 					}
 					best = paper.Label{Time: c.Arrival + duration, Parent: (paper.Path{Edges: edges}).Append(parent, c.Arrival)}
 				}
 				if boards == q.MaxBoardings || c.Arrival >= best.Time {
 					continue
 				}
-				paths, e := getRow(c.To)
+				paths, e := getRow(toID, c.To)
 				if e != nil {
 					return out, e
 				}
@@ -253,16 +282,24 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 						return
 					}
 					out.Stats.TransferPairVisits++
-					ready, allowed, e := p.ReadyTime(q, c.To, path.To, c.Arrival, path.Duration)
-					if e != nil {
-						return out, e
+					if path.ruleError != nil {
+						return out, path.ruleError
 					}
+					minimum := path.minimum
+					if minimum < 0 {
+						minimum = q.TransferBuffer
+					}
+					ready, allowed := c.Arrival+max(path.Duration, minimum), path.allowed
 					if !allowed || ready > q.LatestArrival || ready >= best.Time {
 						continue
 					}
-					old, ok := next[path.To]
-					if !ok || ready < old.Time {
-						next[path.To] = paper.Label{Time: ready, Parent: path.Append(parent, c.Arrival)}
+					old := next[path.to]
+					if !nextSet[path.to] || ready < old.Time {
+						if !nextSet[path.to] {
+							nextStops = append(nextStops, path.to)
+							nextSet[path.to] = true
+						}
+						next[path.to] = paper.Label{Time: ready, Parent: path.Path.Append(parent, c.Arrival)}
 					}
 				}
 			}
@@ -273,7 +310,9 @@ func (x *CappedIndex) Search(ctx context.Context, q model.Query, limits Limits) 
 			}
 			bestArrival = best.Time
 		}
-		previous = next
+		previous, next = next, previous
+		previousSet, nextSet = nextSet, previousSet
+		previousStops, nextStops = nextStops, previousStops
 	}
 	return
 }

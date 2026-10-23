@@ -17,6 +17,7 @@ type trip struct {
 type route struct {
 	trips []trip
 	from  []int
+	to    []int
 }
 type occurrence struct{ route, position int }
 type Index struct {
@@ -108,8 +109,10 @@ func New(d model.Dataset) (*Index, error) {
 	for r := range x.routes {
 		route := &x.routes[r]
 		route.from = make([]int, len(route.trips[0].cs))
+		route.to = make([]int, len(route.trips[0].cs))
 		for i, c := range route.trips[0].cs {
 			route.from[i] = x.stopIDs[c.From]
+			route.to[i] = x.stopIDs[c.To]
 			x.at[c.From] = append(x.at[c.From], occurrence{r, i})
 		}
 	}
@@ -151,13 +154,13 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 		return
 	}
 	walker := x.p.Walker(q)
-	walks := orderedWalks{walker: walker, enabled: early, cache: map[string][]paper.Path{}}
+	walks := x.indexedWalks(walker, q, early)
 	defer func() { out.Stats.WalkClosures = walker.Count }()
 	previous := make([]paper.Label, len(x.atStop))
 	previousSet := make([]bool, len(x.atStop))
 	previousStops := []int{}
 	bestArrival := paper.Infinity
-	paths, e := walks.paths(ctx, q.Origin)
+	paths, states, e := walks.paths(ctx, q.Origin, x.stopIDs[q.Origin])
 	if e != nil {
 		err = e
 		return
@@ -183,7 +186,7 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 			continue
 		}
 		if w.Duration <= q.Walking.Access {
-			stop := x.stopIDs[w.To]
+			stop := states[i].stop
 			if !previousSet[stop] {
 				previousStops = append(previousStops, stop)
 			}
@@ -191,6 +194,11 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 			previous[stop] = paper.Label{Time: at, Parent: n}
 		}
 	}
+	next := make([]paper.Label, len(x.atStop))
+	nextSet := make([]bool, len(x.atStop))
+	nextStops := []int{}
+	queue := make([]int, len(x.routes))
+	routes := []int{}
 	// Exact-round readiness is kept separate from raw alighting and access
 	// labels: role caps and stop-pair rules make ordinary stop-local pruning unsafe.
 	for b := 1; b <= q.MaxBoardings && len(previousStops) > 0; b++ {
@@ -198,10 +206,12 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 			return
 		}
 		out.Stats.Rounds++
-		queue, routes := x.collectRoutes(previousStops)
-		next := make([]paper.Label, len(x.atStop))
-		nextSet := make([]bool, len(x.atStop))
-		nextStops := []int{}
+		queue, routes = x.collectRoutesInto(previousStops, queue, routes)
+		for _, stop := range nextStops {
+			nextSet[stop] = false
+			next[stop] = paper.Label{}
+		}
+		nextStops = nextStops[:0]
 		best := paper.Label{Time: paper.Infinity}
 		for _, r := range routes {
 			if err = ctx.Err(); err != nil {
@@ -217,7 +227,11 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 				}
 				prototype := route.trips[0].cs[i]
 				if label := previous[route.from[i]]; previousSet[route.from[i]] && prototype.Pickup && x.p.Accessible(q, prototype.From) {
-					t := sort.Search(len(route.trips), func(j int) bool { return route.trips[j].cs[i].Departure >= label.Time })
+					hi := len(route.trips)
+					if current >= 0 {
+						hi = current
+					}
+					t := sort.Search(hi, func(j int) bool { return route.trips[j].cs[i].Departure >= label.Time })
 					if t < len(route.trips) && (current < 0 || t < current) && x.p.TripAllowed(q, route.trips[t].id) {
 						current = t
 						parent = label.Parent
@@ -243,7 +257,7 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 					current = -1
 					continue
 				}
-				paths, e := walks.paths(ctx, c.To)
+				paths, states, e := walks.paths(ctx, c.To, route.to[i])
 				if e != nil {
 					err = e
 					return
@@ -269,7 +283,7 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 					if b == q.MaxBoardings || w.Duration > q.Walking.Transfer {
 						continue
 					}
-					at, allowed, e := x.p.ReadyTime(q, c.To, w.To, c.Arrival, w.Duration)
+					at, allowed, e := walks.readyTime(&states[i], c.To, w, c.Arrival)
 					if e != nil {
 						err = e
 						return
@@ -277,7 +291,7 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 					if !allowed || at > q.LatestArrival {
 						continue
 					}
-					stop := x.stopIDs[w.To]
+					stop := states[i].stop
 					if !nextSet[stop] || at < next[stop].Time {
 						if !nextSet[stop] {
 							nextStops = append(nextStops, stop)
@@ -292,7 +306,9 @@ func (x *Index) search(ctx context.Context, q model.Query, early bool) (out pape
 			bestArrival = best.Time
 			out.Journeys = append(out.Journeys, paper.Journey(best.Parent))
 		}
-		previous, previousSet, previousStops = next, nextSet, nextStops
+		previous, next = next, previous
+		previousSet, nextSet = nextSet, previousSet
+		previousStops, nextStops = nextStops, previousStops
 	}
 	return
 }

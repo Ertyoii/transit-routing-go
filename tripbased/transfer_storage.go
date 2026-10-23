@@ -6,14 +6,14 @@ package tripbased
 // A finished row has no spare capacity, so a later append cannot overwrite
 // a neighbouring row. The builder is construction-local, not a shared cache.
 type transferLinkStorage struct {
-	data                  []link
+	data                  []compactLink
 	start, emitted, limit int
 }
 
 const transferLinkChunk = 4096
 
 func (s *transferLinkStorage) begin() { s.start = len(s.data) }
-func (s *transferLinkStorage) append(v link) {
+func (s *transferLinkStorage) append(v compactLink) {
 	if len(s.data) == cap(s.data) {
 		n := len(s.data) - s.start
 		// No row can exceed the remaining declared transfer count. Multiplication
@@ -26,7 +26,7 @@ func (s *transferLinkStorage) append(v link) {
 				capacity = 2 * n
 			}
 		}
-		next := make([]link, n, capacity)
+		next := make([]compactLink, n, capacity)
 		copy(next, s.data[s.start:])
 		s.data = next
 		s.start = 0
@@ -34,7 +34,7 @@ func (s *transferLinkStorage) append(v link) {
 	s.data = append(s.data, v)
 	s.emitted++
 }
-func (s *transferLinkStorage) finish() []link {
+func (s *transferLinkStorage) finish() []compactLink {
 	if s.start == len(s.data) {
 		return nil
 	}

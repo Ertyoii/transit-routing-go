@@ -86,6 +86,7 @@ type TREXPhase struct {
 	Work           int    `json:"work"`
 }
 type TREXSnapshot struct {
+	WalkingClosureLimit     *int64               `json:"walking_closure_limit,omitempty"` // nil means the complete metric
 	FixedTransferWalkingCap *int64               `json:"fixed_transfer_walking_cap,omitempty"`
 	Profile                 string               `json:"profile"`
 	Complete                bool                 `json:"complete"`
@@ -103,7 +104,14 @@ type trexEdge struct {
 	from, exit, to, board int
 	walk                  *paper.Path
 }
-type trexOverlay struct{ starts, edges []int }
+type trexEventRange struct{ begin, end int }
+type trexOverlay struct {
+	starts        []int
+	edges         []uint32
+	wide          []int
+	implicit      bool
+	implicitCount int
+}
 type TREXIndex struct {
 	staticRulesCandidate bool   // opt-in qualification profile; legacy BuildTREX stays strict
 	transferWalkLimit    *int64 // fixed-cap ranked and separate unranked builders bind this policy
@@ -116,9 +124,10 @@ type TREXIndex struct {
 	walks                [][]paper.Path
 	walkMap              []map[int]*paper.Path
 	cells, offsets       []int
-	edges                []trexEdge
+	edges                trexEdgeStore
 	ranks                []uint8 // levels are bounded by 12; verbose metadata is reconstructed on demand
-	byEvent              [][][]int
+	byEvent              [][]trexEventRange
+	eventTrips           []int
 	overlays             []trexOverlay
 	successors           [][]int
 }
@@ -132,8 +141,9 @@ func (x *TREXIndex) Snapshot() TREXSnapshot {
 		view.FixedTransferWalkingCap = &cap
 	}
 	view.Witnesses = x.expandTREXProofs()
-	view.Transfers = make([]TREXTransfer, len(x.edges))
-	for id, e := range x.edges {
+	view.Transfers = make([]TREXTransfer, x.edgeCount())
+	for id := 0; id < x.edgeCount(); id++ {
+		e := x.edgeAt(id)
 		raw := make([]string, len(e.walk.Edges))
 		for j, w := range e.walk.Edges {
 			raw[j] = w.ID
@@ -181,8 +191,8 @@ func BuildTREXStaticRulesCandidate(ctx context.Context, d model.Dataset, cfg TRE
 // graph. Ranks and overlays remain active; per-query replay and independent
 // frontier certification are still required. Query transfer caps must match.
 func BuildTREXFixedTransferCapRankedCandidate(ctx context.Context, d model.Dataset, cfg TREXConfig, transferWalkingCap int64) (*TREXIndex, error) {
-	if transferWalkingCap < 0 {
-		return nil, fmt.Errorf("fixed transfer walking cap must be nonnegative")
+	if transferWalkingCap < 0 || transferWalkingCap > model.MaxServiceSecond {
+		return nil, fmt.Errorf("fixed transfer walking cap must be within the service-time domain")
 	}
 	return buildTREXPolicy(ctx, d, cfg, &transferWalkingCap, true)
 }
@@ -278,7 +288,13 @@ func buildTREXPolicy(ctx context.Context, d model.Dataset, cfg TREXConfig, trans
 	}
 	err = x.phase("walking_closure", func() error {
 		carrier := &FlashIndex{names: x.names, ids: x.ids, cfg: FlashConfig{Limits: FlashLimits{MaxWork: l.MaxWork, MaxClosurePaths: l.MaxClosurePaths, MaxWalkSettled: l.MaxWalkSettled}}, snap: FlashSnapshot{Stats: FlashStats{Work: x.snap.Stats.Work}}}
-		e := carrier.closeWalks(x.base.p.Data, &flashWork{ctx, carrier})
+		// Only the explicit fixed-transfer-cap adapters use a radius. Access,
+		// direct and egress remain query-local and can exceed that radius.
+		if transferWalkLimit != nil {
+			limit := *transferWalkLimit
+			x.snap.WalkingClosureLimit = &limit
+		}
+		e := carrier.closeWalksWithin(x.base.p.Data, &flashWork{ctx, carrier}, transferWalkLimit)
 		x.snap.Stats.Work = carrier.snap.Stats.Work
 		x.snap.Stats.ClosurePaths = carrier.snap.Stats.ClosurePaths
 		x.snap.Stats.WalkSettled = carrier.snap.Stats.WalkSettled

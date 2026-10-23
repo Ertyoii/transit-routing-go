@@ -32,9 +32,9 @@ func (x *BoundedWalkingTBIndex) Snapshot() BoundedWalkingTBSnapshot {
 	return BoundedWalkingTBSnapshot{s.Profile, x.destination, x.removed, x.transferWalkingLimit, s}
 }
 
-// BuildBoundedWalkingTB retains the complete positive walking metric, but makes
-// destination absorbing before computing it. This preserves detours that avoid
-// destination when the unrestricted shortest path passes through destination.
+// BuildBoundedWalkingTB makes destination absorbing before preparing exact
+// transfer walks within transferWalkingLimit. Query-local exact endpoint walks
+// preserve larger Access/Egress/Direct caps and destination-avoiding detours.
 // cfg must explicitly select level zero with no supplied partition. All existing
 // preparation limits and fail-closed resource checks remain in force.
 func BuildBoundedWalkingTB(ctx context.Context, d model.Dataset, destination string, transferWalkingLimit int64, cfg TREXConfig) (*BoundedWalkingTBIndex, error) {

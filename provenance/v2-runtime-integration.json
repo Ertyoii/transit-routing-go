@@ -1,0 +1,855 @@
+{
+  "baseline_commit": "b102816018b1db87304c751f2cd601a2abe4057a",
+  "source_repository": "https://github.com/Ertyoii/transit-routing-bench",
+  "source_commit": "3eba733eb182ca06ce81a678fd23f6a2b4a492ca",
+  "source_root": "results/sg-public-model-2026-10-22-v2/source",
+  "source_reconstruction": "BRANCH_RECONSTRUCTION.json and scripts/reconstruct_code.py identify exact branch parents and source bytes; sibling patches are not stacked blindly.",
+  "scope": "New compatible non-CSA library integration. No inherited measured executable identity, new full-model measurement, or real-data payload. This map excludes itself to avoid self-reference. Earlier provenance maps remain historical unchanged.",
+  "composition": [
+    "routing-noncsa-noarena for common dense state, indexed walks, compact TB and reusable walking sessions; slab-allocation sibling not enabled",
+    "routing-range-opt for range-only changes",
+    "routing-walk-prefix-v1 for native preparation, compact T-REX and walking prefix",
+    "routing-tb-answer-ties additive answer-tie API",
+    "routing-sparse-lean-v3 additive ULTRA local tie/cost summary APIs",
+    "bench-safe-fill-B-q01 standalone recommend/validate changes; bench-selector-hybrid preserves bounded selector tests"
+  ],
+  "unchanged_packages": [
+    "csa",
+    "eacsa",
+    "profilecsa"
+  ],
+  "verification": {
+    "toolchain": "go1.27.3 linux/amd64",
+    "standalone_build": "passed: go build ./...",
+    "standalone_unit": "passed: go test ./... -count=1 -timeout=240s",
+    "standalone_race": "passed: go test -race ./... -count=1 -timeout=300s; final selector/validator changes rechecked with go test -race ./recommend ./validate -count=1 -timeout=120s",
+    "standalone_vet": "passed: go vet ./...",
+    "independent_synthetic_regressions": "passed: separate reconstruction of bench-safe-fill-B-q01, with a temporary module replacement to this library; go test -mod=mod ./regression/... (21 packages)",
+    "full_campaign": "not rerun; no new full-model timing, memory or quality result",
+    "fuzz_smoke": {
+      "FuzzRangeDenseStorage": "passed: 5 seconds, 24335 executions",
+      "FuzzLocalWalkTiesVectors": "passed: 5 seconds, 22445 executions",
+      "FuzzTREXProofDecode": "passed: 5 seconds, 205784 executions"
+    },
+    "interpretation": "Aggregate checks passed before final isolated selector guard/prose edits; final affected packages, build/vet and benchmark regressions were checked again. This is bounded verification, not full-network qualification.",
+    "final_public_api_guard": "passed: uninitialized-session tests plus go test -race ./walking/... ./paper ./raptor ./ultra -count=1 -timeout=120s, followed by full build/vet; no valid-session behavior changed"
+  },
+  "changed_files": [
+    {
+      "path": "README.md",
+      "output_bytes": 4586,
+      "output_sha256": "543d7c94807c47259330335f861eca15da269f64c3a7b797825a36ac7f18fa1b",
+      "baseline_sha256": "d2af5d4bfb6e6372390489751c9f7ead7adc20a89e86f7c4149bc077d9d9c959",
+      "transformation": "new integration documentation or regression test"
+    },
+    {
+      "path": "docs/RESEARCH_CHECKPOINT.md",
+      "output_bytes": 7094,
+      "output_sha256": "94205891fb5380922001c9a8568428291e52062b12f7b781c1e7996c63a01484",
+      "baseline_sha256": "4c04642c7ccaf295929c3af4c896fdb0349fa30d640fac9562000a75334112f8",
+      "transformation": "new integration documentation or regression test"
+    },
+    {
+      "path": "docs/V2_RUNTIME_INTEGRATION.md",
+      "output_bytes": 6118,
+      "output_sha256": "e86dbb3d36a08e73dd6dd86123203d9b21ffa7600bf7efbd21ed9a76f8021362",
+      "baseline_sha256": null,
+      "transformation": "new integration documentation or regression test"
+    },
+    {
+      "path": "paper/node_arena.go",
+      "output_bytes": 1247,
+      "output_sha256": "c0900ba135e334180d208e23234c3dcd1777abc38c14a8762987645178239dd0",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "paper/node_arena.go",
+      "source_sha256": "70dbf5f5133e7939beac7dd12e1dbd90b14200d9295f2f7e6740496c5b828241",
+      "transformation": "document the optional arena must not be copied after use; slab use is not enabled"
+    },
+    {
+      "path": "paper/node_arena_test.go",
+      "output_bytes": 1642,
+      "output_sha256": "24e18c129540fa2a7426215345bc80bb733b86b5a86774bdb27d07b7a3589d4d",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "paper/node_arena_test.go",
+      "source_sha256": "24e18c129540fa2a7426215345bc80bb733b86b5a86774bdb27d07b7a3589d4d",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "paper/profile.go",
+      "output_bytes": 9953,
+      "output_sha256": "96f9ed6c4ef844dd0e761bcc13f78064fbf5c3c61d440b44c2e952db687913fb",
+      "baseline_sha256": "ef171ca2a3827d687687c0a8f21000cd1af9d8534b571f78e91e37c70f75376a",
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "paper/profile.go",
+      "source_sha256": "96f9ed6c4ef844dd0e761bcc13f78064fbf5c3c61d440b44c2e952db687913fb",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "paper/walker_session_test.go",
+      "output_bytes": 2948,
+      "output_sha256": "b32c13e37951252b19e88e3f38da46e22a886cc65434d9acd7e820513d0be3b0",
+      "baseline_sha256": null,
+      "transformation": "new integration documentation or regression test"
+    },
+    {
+      "path": "raptor/indexed_baseline_test.go",
+      "output_bytes": 12739,
+      "output_sha256": "8ac65bf55dbde005be52722b2fe9b020da33b451926b30636f00ef6b3f9e9926",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/indexed_baseline_test.go",
+      "source_sha256": "8ac65bf55dbde005be52722b2fe9b020da33b451926b30636f00ef6b3f9e9926",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/indexed_walks.go",
+      "output_bytes": 2304,
+      "output_sha256": "6607b6be2ce94ef6ec22348d04ca03fa85a1917ad4dc5694f5636bde87ec2c8b",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/indexed_walks.go",
+      "source_sha256": "6607b6be2ce94ef6ec22348d04ca03fa85a1917ad4dc5694f5636bde87ec2c8b",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/indexed_walks_test.go",
+      "output_bytes": 5956,
+      "output_sha256": "c37a7414fb0fbea5d6ab5aecb04d21ba94a12e124b7b4589a9570f89efad5670",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/indexed_walks_test.go",
+      "source_sha256": "c37a7414fb0fbea5d6ab5aecb04d21ba94a12e124b7b4589a9570f89efad5670",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/local_walk_ties.go",
+      "output_bytes": 6352,
+      "output_sha256": "a421d1457d7d960d835420783bc859a1d4186c5a01d146f965996e6569e1f9ff",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/local_walk_ties.go",
+      "source_sha256": "a421d1457d7d960d835420783bc859a1d4186c5a01d146f965996e6569e1f9ff",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/local_walk_ties_test.go",
+      "output_bytes": 5238,
+      "output_sha256": "12dc18a87d11697d074082dd70ee5a0a433995e5986d12c5330e84233931d562",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/local_walk_ties_test.go",
+      "source_sha256": "12dc18a87d11697d074082dd70ee5a0a433995e5986d12c5330e84233931d562",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/multicriteria.go",
+      "output_bytes": 9603,
+      "output_sha256": "7bcb4922d0b4bee980a2be58181d1017119a10e1d0e5e7a7e961c4f7a75a9ea0",
+      "baseline_sha256": "ef138e2e6520fffa6344089dd29eea0016a221369c997f37e17a9945ce2d6b61",
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/multicriteria.go",
+      "source_sha256": "7bcb4922d0b4bee980a2be58181d1017119a10e1d0e5e7a7e961c4f7a75a9ea0",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/range.go",
+      "output_bytes": 8196,
+      "output_sha256": "7ec5ea24bb15492972580f61d326fc299b3665ce5b3aa7857d853610967365fc",
+      "baseline_sha256": "81f63bb9d674bd0e9955b4aa493b1657ed9c8c7992d04c9fc76960ef92805a15",
+      "source_tree": "routing-range-opt",
+      "source_path": "raptor/range.go",
+      "source_sha256": "7ec5ea24bb15492972580f61d326fc299b3665ce5b3aa7857d853610967365fc",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/range_frozen_native_test.go",
+      "output_bytes": 7238,
+      "output_sha256": "24b16a3a5935c5262e102f96444d1c2c1f4dc3963ba0db1bcda5f3c055faa59f",
+      "baseline_sha256": null,
+      "source_tree": "routing-range-opt",
+      "source_path": "raptor/range_frozen_native_test.go",
+      "source_sha256": "24b16a3a5935c5262e102f96444d1c2c1f4dc3963ba0db1bcda5f3c055faa59f",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/range_storage_test.go",
+      "output_bytes": 7154,
+      "output_sha256": "f34ba6d84d8d12e0514148d234b8ed6bff8a149d5a495e0cb9b528333a2795cc",
+      "baseline_sha256": null,
+      "source_tree": "routing-range-opt",
+      "source_path": "raptor/range_storage_test.go",
+      "source_sha256": "f34ba6d84d8d12e0514148d234b8ed6bff8a149d5a495e0cb9b528333a2795cc",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/raptor.go",
+      "output_bytes": 8706,
+      "output_sha256": "85e8bb804971f1768910952bbe1c9a59928061b54acd64eaed8288f9ddc26d75",
+      "baseline_sha256": "86a73775704c8c34417f272f3d2298346a4cabc9f55cba25f4800a2d43668fd8",
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/raptor.go",
+      "source_sha256": "85e8bb804971f1768910952bbe1c9a59928061b54acd64eaed8288f9ddc26d75",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/round_queue.go",
+      "output_bytes": 1348,
+      "output_sha256": "1f86bcfbed13072e69aa7fb04783d1fd916e824e697956bfdf7c128cbdcfa55a",
+      "baseline_sha256": "3319c9839c727e512d7eef37a5d078c4c4438769dc7254622bac040bdf535a70",
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/round_queue.go",
+      "source_sha256": "1f86bcfbed13072e69aa7fb04783d1fd916e824e697956bfdf7c128cbdcfa55a",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/v2_frozen_test.go",
+      "output_bytes": 12688,
+      "output_sha256": "6e4d8214d90c4ee52c1591d9d0b7128dd6b9fa4b571418d973b353dd9be29a9f",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/v2_frozen_test.go",
+      "source_sha256": "6e4d8214d90c4ee52c1591d9d0b7128dd6b9fa4b571418d973b353dd9be29a9f",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "raptor/v2_storage_test.go",
+      "output_bytes": 2832,
+      "output_sha256": "7820dd62fba758923bb4fc59e357dd00440e25222670ca07bb588b3b5147de4f",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "raptor/v2_storage_test.go",
+      "source_sha256": "f2df5310c9b1656963bbddf7e0eb9a87f88f872faad59f905c81e3ceeaf73c85",
+      "transformation": "rename copied benchmark label from slabs_reuse to round_reuse; no slab allocation enabled"
+    },
+    {
+      "path": "recommend/README.md",
+      "baseline_sha256": null,
+      "transformation": "new standalone integration documentation or regression test",
+      "output_bytes": 5380,
+      "output_sha256": "9a4e7e1efcc5e0cb4abbe493c0a2d9354d16eca266aea1a7a6ae397cfad72428"
+    },
+    {
+      "path": "recommend/bounded.go",
+      "output_bytes": 18826,
+      "output_sha256": "b23345b9e8899b6275a833f64ca90f8e5bfb743960b7fc9e960a5d8d831d5e56",
+      "baseline_sha256": null,
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/bounded.go",
+      "source_sha256": "b23345b9e8899b6275a833f64ca90f8e5bfb743960b7fc9e960a5d8d831d5e56",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "recommend/bounded_test.go",
+      "output_bytes": 7484,
+      "output_sha256": "e1b97e382426fabeb6babecf9a63ac7761cd6f7de26819806233494f13b9cd46",
+      "baseline_sha256": null,
+      "source_tree": "bench-selector-hybrid",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/bounded_test.go",
+      "source_sha256": "e1b97e382426fabeb6babecf9a63ac7761cd6f7de26819806233494f13b9cd46",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "recommend/choices.go",
+      "output_bytes": 13093,
+      "output_sha256": "dca1a712fad75ba2f5fc219fe37dea09a3772fbb2719a155f0eb78c83a56f24f",
+      "baseline_sha256": "f92dc795483533d0c7d1bbfeecff3c56a8b9e516d30c85cfc48a92c515a9e8d2",
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/choices.go",
+      "source_sha256": "f6e4fbf04d5c00cc4d25d0cfde3e86ebf3c87831b742ee5abd0f1d9a03b002dc",
+      "transformation": "gofmt"
+    },
+    {
+      "path": "recommend/finite_safe.go",
+      "output_bytes": 13425,
+      "output_sha256": "8c51ba3bb3f47cda8347aad922f3321012ac0f83f1e3b1cc3b1ca6aecdd3b621",
+      "baseline_sha256": null,
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/finite_safe.go",
+      "source_sha256": "22be30f8c399ab6b4e615995a8e1ed9dd966d3254ca53f333de1f6128de722a7",
+      "transformation": "gofmt; replace stale staging/campaign-specific status prose with standalone experimental wording"
+    },
+    {
+      "path": "recommend/finite_safe_evaluate.go",
+      "output_bytes": 1706,
+      "output_sha256": "ac976986104e295dc14d2f99702536d7c5d2d8d7b8ed527510a4b4b32ed7adb9",
+      "baseline_sha256": null,
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/finite_safe_evaluate.go",
+      "source_sha256": "9078311f3529533abce60caa2e6f64f329458aaddd54e7e35d1ea8f13107c28a",
+      "transformation": "gofmt; replace stale staging/campaign-specific status prose with standalone experimental wording"
+    },
+    {
+      "path": "recommend/finite_safe_test.go",
+      "output_bytes": 5671,
+      "output_sha256": "e7748a63d01de0d19dc4fb813e2f2960b5d7e77fd7500d41467b5508b1b39c50",
+      "baseline_sha256": null,
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/finite_safe_test.go",
+      "source_sha256": "0b175f9d38d6396f3f62eac9154b68019d8a12c7f7a35e0c9f26185e23e81ce8",
+      "transformation": "gofmt; replace stale staging/campaign-specific status prose with standalone experimental wording"
+    },
+    {
+      "path": "recommend/hybrid_fill.go",
+      "output_bytes": 12728,
+      "output_sha256": "0ee97e8b7fe81db33eb6c66d5bc6071e90858597265cb63a8c7412bb67374c39",
+      "baseline_sha256": null,
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/hybrid_fill.go",
+      "source_sha256": "13916c3e2c63555688d59a72235e51c83b381ecaacea34a5ec8489ce55f2c2ca",
+      "transformation": "gofmt; replace stale staging/campaign-specific status prose with standalone experimental wording"
+    },
+    {
+      "path": "recommend/hybrid_fill_evaluate.go",
+      "output_bytes": 1369,
+      "output_sha256": "0fb9b6e2002574bb23878e53b30525ec1bac2c7843f448101e3d3b09cd23370a",
+      "baseline_sha256": null,
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/hybrid_fill_evaluate.go",
+      "source_sha256": "c10555d3b4bb4cf2e29d203b8ef51304647218ecd0c37c9e700fcc17b7b8def5",
+      "transformation": "gofmt; replace stale staging/campaign-specific status prose with standalone experimental wording"
+    },
+    {
+      "path": "recommend/hybrid_fill_test.go",
+      "output_bytes": 4527,
+      "output_sha256": "456734d9f71dd718b5db94957ae66d149b7c35a6ea159264fd4d368e62780f25",
+      "baseline_sha256": null,
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/hybrid_fill_test.go",
+      "source_sha256": "e1ae05bf1cc4a5bd76948b250e19c21a896b5d12091154dc75f42e2f88885773",
+      "transformation": "gofmt; replace stale staging/campaign-specific status prose with standalone experimental wording"
+    },
+    {
+      "path": "recommend/lean.go",
+      "output_bytes": 3154,
+      "output_sha256": "0a733ec51c5b603536d891f7cd52e0afdd54c07a96a01fce2bf7481e11b25818",
+      "baseline_sha256": null,
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/lean.go",
+      "source_sha256": "9db7855a5cea9469e039fe8bfa5c543df8d0183d9cd3c5bb57b453b75b6a5927",
+      "transformation": "gofmt; harden direct opt-in configuration dispatch, empty/final cancellation and fail-closed pattern selections"
+    },
+    {
+      "path": "recommend/quality.go",
+      "output_bytes": 12580,
+      "output_sha256": "1285c72f9158b409e29b3cea8f56ba9692a2a5a39aa9d0286692dece900d8524",
+      "baseline_sha256": "0305ce81032f25cb01a721a7567330d8339babbcebdf889ad61404b35e70d627",
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/recommend/quality.go",
+      "source_sha256": "232de68d0b4a0d45e2506c839a9af2cb5702abd3c042f3ea63af96e0533b93d2",
+      "transformation": "gofmt; clarify shared-checker constructor capabilities and its legacy-recovery rejection message; defaults unchanged"
+    },
+    {
+      "path": "recommend/runtime_integration_test.go",
+      "output_bytes": 10785,
+      "output_sha256": "7748337c0d069e670f06321515331427a89844b162dc4cdac3f2a90b36464a7a",
+      "baseline_sha256": null,
+      "transformation": "new integration documentation or regression test"
+    },
+    {
+      "path": "recommend/selector_adversarial_test.go",
+      "output_bytes": 3665,
+      "output_sha256": "561a6e1cba8b77924a7ba33b7eb7b093230e22b584e77984f6ab6f833cb16e77",
+      "baseline_sha256": null,
+      "transformation": "new integration documentation or regression test"
+    },
+    {
+      "path": "tripbased/bounded_walking.go",
+      "output_bytes": 3918,
+      "output_sha256": "0c9590242b29b11ee049b223c828e511a16785a6c3eda65a4d3810f5ff29fa34",
+      "baseline_sha256": "e071918fcd8db1941a791108d0f54c787420fe76d3df161ae3ee7cc5e2e64eb9",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/bounded_walking.go",
+      "source_sha256": "0c9590242b29b11ee049b223c828e511a16785a6c3eda65a4d3810f5ff29fa34",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/capped_answer_walk_ties.go",
+      "output_bytes": 7486,
+      "output_sha256": "0646c6d4847d06f05fe01548be80b8434382f563273d69b592f109d0bd6e172b",
+      "baseline_sha256": null,
+      "source_tree": "routing-tb-answer-ties",
+      "source_path": "tripbased/capped_answer_walk_ties.go",
+      "source_sha256": "0646c6d4847d06f05fe01548be80b8434382f563273d69b592f109d0bd6e172b",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/capped_answer_walk_ties_native_test.go",
+      "output_bytes": 3934,
+      "output_sha256": "d77e751fdf98e157611ed314ee41e03ce1a6048950d304828ece299cd7d96609",
+      "baseline_sha256": null,
+      "source_tree": "routing-tb-answer-ties",
+      "source_path": "tripbased/capped_answer_walk_ties_native_test.go",
+      "source_sha256": "d77e751fdf98e157611ed314ee41e03ce1a6048950d304828ece299cd7d96609",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/capped_answer_walk_ties_test.go",
+      "output_bytes": 11298,
+      "output_sha256": "66248a6887380e4b3894c4ff5d69b8199c9c638da2aa03b8040703d5058e402f",
+      "baseline_sha256": null,
+      "source_tree": "routing-tb-answer-ties",
+      "source_path": "tripbased/capped_answer_walk_ties_test.go",
+      "source_sha256": "66248a6887380e4b3894c4ff5d69b8199c9c638da2aa03b8040703d5058e402f",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/capped_patterns.go",
+      "output_bytes": 17741,
+      "output_sha256": "f63854c75da62f1dd48fdae03357a7ec2871bac8fda60b22d41778acd525740e",
+      "baseline_sha256": "640b9cd381f4995d3591315d11a3860e18cb7f8cd89db68a5a0d9641cea83c71",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/capped_patterns.go",
+      "source_sha256": "f63854c75da62f1dd48fdae03357a7ec2871bac8fda60b22d41778acd525740e",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/capped_retained.go",
+      "output_bytes": 14746,
+      "output_sha256": "d961cf22818d4a30a471313267c4b6123dcf9f8b025dde118889f9e0c309ef50",
+      "baseline_sha256": "c05ebc389999a70546748f2e9aadd415e92b2af2b57b117ef8a6ab866acd5c9e",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/capped_retained.go",
+      "source_sha256": "d961cf22818d4a30a471313267c4b6123dcf9f8b025dde118889f9e0c309ef50",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/compact_links.go",
+      "output_bytes": 3120,
+      "output_sha256": "85f66d312381ee13a9a8617e85edd664c4fc3351e6961304e1a3f2cfc251fc09",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/compact_links.go",
+      "source_sha256": "85f66d312381ee13a9a8617e85edd664c4fc3351e6961304e1a3f2cfc251fc09",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/compact_links_test.go",
+      "output_bytes": 13698,
+      "output_sha256": "eab7fe3a228254c1813b2b8d78b95e24b5e9156e11909f99f00c03971f94a1b6",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/compact_links_test.go",
+      "source_sha256": "eab7fe3a228254c1813b2b8d78b95e24b5e9156e11909f99f00c03971f94a1b6",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/cost_summary.go",
+      "output_bytes": 4029,
+      "output_sha256": "7892623f050bee51f1d38a7ff43ef6e0585140b028fdb7f5fcc26215ad891dbb",
+      "baseline_sha256": "d686016f8800364ad351da9bab8a440d4daa50042b5c59164ea526c168ec649c",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/cost_summary.go",
+      "source_sha256": "7892623f050bee51f1d38a7ff43ef6e0585140b028fdb7f5fcc26215ad891dbb",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/flash.go",
+      "output_bytes": 20440,
+      "output_sha256": "fc6c1977c7952d31023106e2d651ed2dc9736fc2862ea412e795414f31cb2c28",
+      "baseline_sha256": "1ea53260bdf2dedb271f269c738b271895aeb389a0275917c17923ed7ef5829b",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/flash.go",
+      "source_sha256": "fc6c1977c7952d31023106e2d651ed2dc9736fc2862ea412e795414f31cb2c28",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/flash_graph.go",
+      "output_bytes": 8712,
+      "output_sha256": "998e2ce1b757f9ec0d1ecfcee0d134e47950f5ca813993a469fdd236f73091be",
+      "baseline_sha256": "00206c170c2e0dd1b05126d5efd02d75ff05d6873c0434e57254b3620ee0914e",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/flash_graph.go",
+      "source_sha256": "998e2ce1b757f9ec0d1ecfcee0d134e47950f5ca813993a469fdd236f73091be",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/flash_profile.go",
+      "output_bytes": 9271,
+      "output_sha256": "69a2a37340fe46c29ea70645b7e68457000bc73a1e9a806f9173be10d0c7fd5b",
+      "baseline_sha256": "6b5d85fb4b14390529ef2a01d1c91ed5a2c7d39c7957834286d79cbe7e75acab",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/flash_profile.go",
+      "source_sha256": "69a2a37340fe46c29ea70645b7e68457000bc73a1e9a806f9173be10d0c7fd5b",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/flash_retained.go",
+      "output_bytes": 8942,
+      "output_sha256": "217ab3ffdcc071e44e3499fae1049fd0149132211f4fda60e6bd57a7fd5a95a8",
+      "baseline_sha256": "e65439c050357c31fc7b00b974b16e9fe488a9380d56779efb089e3de59655d3",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/flash_retained.go",
+      "source_sha256": "217ab3ffdcc071e44e3499fae1049fd0149132211f4fda60e6bd57a7fd5a95a8",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/flash_rules.go",
+      "output_bytes": 9931,
+      "output_sha256": "ee3eced244a67a3e9f5007c16272a395c06f4da4bf830e936fe1b94dd9d063bc",
+      "baseline_sha256": "1d0e6061c3cfafc2c7a2cbc1bdca5854ca77e03b3cd43b754c6dd502f53ad80e",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/flash_rules.go",
+      "source_sha256": "ee3eced244a67a3e9f5007c16272a395c06f4da4bf830e936fe1b94dd9d063bc",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/flash_transfers.go",
+      "output_bytes": 6848,
+      "output_sha256": "f504d676424c3733c5a03c00eb1b929afa9ee3c13df8ddb988d9ed9efced1205",
+      "baseline_sha256": "fd36b6c2e2259448928383ce8e7efb403027c980880770f7f9eaf97decd1c06e",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/flash_transfers.go",
+      "source_sha256": "f504d676424c3733c5a03c00eb1b929afa9ee3c13df8ddb988d9ed9efced1205",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/index.go",
+      "output_bytes": 8013,
+      "output_sha256": "b0503beb184bf7e89f4b8ac16b6e9d427fafe809b348016c993b29930e12e607",
+      "baseline_sha256": "cf39823376309fb08f5c091caeeb95a79aca06316738673c49db1e76d9ac28e5",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/index.go",
+      "source_sha256": "b0503beb184bf7e89f4b8ac16b6e9d427fafe809b348016c993b29930e12e607",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/query.go",
+      "output_bytes": 8103,
+      "output_sha256": "454c9313f2b02518d4542857e74b7077ad25ce4de32a4944e1d0a1ab1e937cc3",
+      "baseline_sha256": "b85fd359a5362825de485da9015fcab9a08a361f9913eac749402f330284c91b",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/query.go",
+      "source_sha256": "454c9313f2b02518d4542857e74b7077ad25ce4de32a4944e1d0a1ab1e937cc3",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/transfer_storage.go",
+      "output_bytes": 1359,
+      "output_sha256": "5c3fff927b5143a367f5129e59701be4e2e9fe11e511a659c7e7078c12586c34",
+      "baseline_sha256": "d6c0b99c764e6603598bec90088e10466bf9943802a2b2180e7a2d5e3e005190",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/transfer_storage.go",
+      "source_sha256": "5c3fff927b5143a367f5129e59701be4e2e9fe11e511a659c7e7078c12586c34",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex.go",
+      "output_bytes": 16117,
+      "output_sha256": "9e600f8ab60366f7de16c239fd2281a1237a8571897b862ffbd52bf4ca935561",
+      "baseline_sha256": "0cb573f7cf9cedcee86931596b67f2e9333bdf911d6b80ec34d6f359e49d1801",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex.go",
+      "source_sha256": "9e600f8ab60366f7de16c239fd2281a1237a8571897b862ffbd52bf4ca935561",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_compact.go",
+      "output_bytes": 4315,
+      "output_sha256": "418107b649dd467b74254ce8655e6bd1f9dcaf5ee3f7e4c70c3fc36536f50809",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_compact.go",
+      "source_sha256": "418107b649dd467b74254ce8655e6bd1f9dcaf5ee3f7e4c70c3fc36536f50809",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_compact_test.go",
+      "output_bytes": 4230,
+      "output_sha256": "0e5b9efb840cd97afc8db6abd7cba6a3ce55e178731e2d1bd1763a7b9f3ab078",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_compact_test.go",
+      "source_sha256": "0e5b9efb840cd97afc8db6abd7cba6a3ce55e178731e2d1bd1763a7b9f3ab078",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_compact_wholeword_test.go",
+      "output_bytes": 2370,
+      "output_sha256": "0263a076d3371f1b5167602b59b78208cb820207e0e54843b7c3e9647f64ccb0",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_compact_wholeword_test.go",
+      "source_sha256": "0263a076d3371f1b5167602b59b78208cb820207e0e54843b7c3e9647f64ccb0",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_customization.go",
+      "output_bytes": 8699,
+      "output_sha256": "c013628d58e754f04961f893b96352133a4521f933f89b43e3caaf47bf6af40a",
+      "baseline_sha256": "6b2014268e6b19b1ebb9d0744a23fafe745f3e6e2d591a712b8da0d8dbc89b40",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_customization.go",
+      "source_sha256": "c013628d58e754f04961f893b96352133a4521f933f89b43e3caaf47bf6af40a",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_diagnostic.go",
+      "output_bytes": 2194,
+      "output_sha256": "6d3ac02a360d9741ac457d4ec31aae837792dc684fab795680bf29a14ab89ff6",
+      "baseline_sha256": "6051dc45d12e3a535ab2f02bf31090d0cd386d5e22c408132dca13a6f43ac0d7",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_diagnostic.go",
+      "source_sha256": "6d3ac02a360d9741ac457d4ec31aae837792dc684fab795680bf29a14ab89ff6",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_partition.go",
+      "output_bytes": 7166,
+      "output_sha256": "163d8d47e7aa020bd55ecd46bfd3fac1d4486925acde44f91dbda4be69cb5b01",
+      "baseline_sha256": "5593e6b73434b7055884d00a205ec1567dd34204527819d44ab0b1e1570f76d3",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_partition.go",
+      "source_sha256": "163d8d47e7aa020bd55ecd46bfd3fac1d4486925acde44f91dbda4be69cb5b01",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_proofs.go",
+      "output_bytes": 4635,
+      "output_sha256": "82e8819d86e69f71d22e28875b4f266be3fec7b0e39f2935c49bd0c925e34852",
+      "baseline_sha256": "731aac977eeb4ddb81df4c6dd0c144e5f4b3a94697ce9a69814d4516210a60bd",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_proofs.go",
+      "source_sha256": "82e8819d86e69f71d22e28875b4f266be3fec7b0e39f2935c49bd0c925e34852",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_proofs_test.go",
+      "output_bytes": 7696,
+      "output_sha256": "09daf774ef6bdc3bc399f7abcf2536b5cfd5d20e42d54a9f628cb82839217465",
+      "baseline_sha256": "318df6095e71cb0d0c545034ae6427cd3266ce79226a3357ae47b86eb8e34ab8",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_proofs_test.go",
+      "source_sha256": "09daf774ef6bdc3bc399f7abcf2536b5cfd5d20e42d54a9f628cb82839217465",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_query.go",
+      "output_bytes": 9681,
+      "output_sha256": "13fff151e308e770839bb093bf952a0461d48874d5a784a88bf2472265f9ff64",
+      "baseline_sha256": "b4ef29a963f239feb16b08e42a91dfc479c90c3ab479b7abea9df4b941cd7913",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_query.go",
+      "source_sha256": "13fff151e308e770839bb093bf952a0461d48874d5a784a88bf2472265f9ff64",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_storage.go",
+      "output_bytes": 6018,
+      "output_sha256": "0fa08c43c341190e32c7200304fd62a6c6a1944e4434f79d72c0ab93d22c4832",
+      "baseline_sha256": "05385e29ecb9dcb98baec226568f2a026b07a7c10149a38f5da0174102d74531",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_storage.go",
+      "source_sha256": "0fa08c43c341190e32c7200304fd62a6c6a1944e4434f79d72c0ab93d22c4832",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_storage_test.go",
+      "output_bytes": 3264,
+      "output_sha256": "4be8706804d5f48d104438ebeb70d19d7cb36d359304c10f658ee5698a8f9c0a",
+      "baseline_sha256": "4b5b6c93c4437d314c5908675ebbd90a65f17687067b4e216db2049e6cfeab37",
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_storage_test.go",
+      "source_sha256": "4be8706804d5f48d104438ebeb70d19d7cb36d359304c10f658ee5698a8f9c0a",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/trex_walking_scope.go",
+      "output_bytes": 4416,
+      "output_sha256": "1f6dcbcdb3743866f5fa698805c5235e41d99136a4dca7b346c298d83da765ca",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/trex_walking_scope.go",
+      "source_sha256": "1f6dcbcdb3743866f5fa698805c5235e41d99136a4dca7b346c298d83da765ca",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/walking_prefix_internal_test.go",
+      "output_bytes": 5889,
+      "output_sha256": "e16b1d4a288aafc02a58c5b86081ce1ba000e22e060108d96e428f754460d6e7",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/walking_prefix_internal_test.go",
+      "source_sha256": "e16b1d4a288aafc02a58c5b86081ce1ba000e22e060108d96e428f754460d6e7",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/walking_scope_internal_test.go",
+      "output_bytes": 10869,
+      "output_sha256": "c1b223ca1b261045c4a84e45110d18041c09ce939f1a8fd636522bf3a0aafeaf",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/walking_scope_internal_test.go",
+      "source_sha256": "c1b223ca1b261045c4a84e45110d18041c09ce939f1a8fd636522bf3a0aafeaf",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "tripbased/walking_scope_oracle_test.go",
+      "output_bytes": 7038,
+      "output_sha256": "37247f8296cf47572f1b8b649fadd939759350065dabd2f4cd25eb22b89ea144",
+      "baseline_sha256": null,
+      "source_tree": "routing-walk-prefix-v1",
+      "source_path": "tripbased/walking_scope_oracle_test.go",
+      "source_sha256": "37247f8296cf47572f1b8b649fadd939759350065dabd2f4cd25eb22b89ea144",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/capped.go",
+      "output_bytes": 10955,
+      "output_sha256": "2cd79a4b4e1397bb6120f6d747798e53f5789f86a70d0094ecfb1e525f763fca",
+      "baseline_sha256": "ff4fe3a86923e9f38b8ddfad1fb4754760e475c3b44d76e1f8943b0c7d4141a7",
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "ultra/capped.go",
+      "source_sha256": "2cd79a4b4e1397bb6120f6d747798e53f5789f86a70d0094ecfb1e525f763fca",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/capped_dense_test.go",
+      "output_bytes": 14210,
+      "output_sha256": "ab0bf5b5f89b954fa9cef4a2225305b0876651c687db80ac4d8081510938d86b",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "ultra/capped_dense_test.go",
+      "source_sha256": "ab0bf5b5f89b954fa9cef4a2225305b0876651c687db80ac4d8081510938d86b",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/capped_frozen_baseline_test.go",
+      "output_bytes": 8172,
+      "output_sha256": "22e1eaf579d14dbf668de6f9c7e2c91f720ff3d9f25006bf87fd42bb31139ff6",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "ultra/capped_frozen_baseline_test.go",
+      "source_sha256": "22e1eaf579d14dbf668de6f9c7e2c91f720ff3d9f25006bf87fd42bb31139ff6",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/capped_frozen_search_test.go",
+      "output_bytes": 7437,
+      "output_sha256": "759aa8f49a9d264327f10da34c6747894bdcba837d5aca3529a9ff971f06ed0e",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "ultra/capped_frozen_search_test.go",
+      "source_sha256": "759aa8f49a9d264327f10da34c6747894bdcba837d5aca3529a9ff971f06ed0e",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/capped_frozen_sparse_test.go",
+      "output_bytes": 6842,
+      "output_sha256": "a6bc2f8297a977bf85656e25fee633303cdfc2331aa2251d02ddd9b8b654d78d",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "ultra/capped_frozen_sparse_test.go",
+      "source_sha256": "a6bc2f8297a977bf85656e25fee633303cdfc2331aa2251d02ddd9b8b654d78d",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/capped_search.go",
+      "output_bytes": 8637,
+      "output_sha256": "602c1378895e5400d986b45add793c54b8aa7c7e73d96961722519a952677176",
+      "baseline_sha256": "ffb5faa7cc306622a4589df8d7902784044163b132fd7facb6363806a8a16fac",
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "ultra/capped_search.go",
+      "source_sha256": "602c1378895e5400d986b45add793c54b8aa7c7e73d96961722519a952677176",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/local_walk_ties.go",
+      "output_bytes": 10207,
+      "output_sha256": "c6f19c96bde2bf9b9eaa41b3e700552fc38f67d10094fda978055dc5e5f45dda",
+      "baseline_sha256": null,
+      "source_tree": "routing-sparse-lean-v3",
+      "source_path": "ultra/local_walk_ties.go",
+      "source_sha256": "c6f19c96bde2bf9b9eaa41b3e700552fc38f67d10094fda978055dc5e5f45dda",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/local_walk_ties_test.go",
+      "output_bytes": 9996,
+      "output_sha256": "1f5c47f48ff74907824912d42537ea8680b1aa60132fe378ae583c67e9f49a23",
+      "baseline_sha256": null,
+      "source_tree": "routing-sparse-lean-v3",
+      "source_path": "ultra/local_walk_ties_test.go",
+      "source_sha256": "d217ca715491259ffdbe23938d3509e72758c7b541c9e233e492fff1783a2570",
+      "transformation": "add optional-API capability/completeness/fixed-buffer, sparse-frontier and nonminimum-walking regressions"
+    },
+    {
+      "path": "ultra/sparse.go",
+      "output_bytes": 8575,
+      "output_sha256": "f87a6d7953394cd64d87b9ec2ef68949e49f4495c78d851213080af6183a03ed",
+      "baseline_sha256": "ba02a1ea229167619a0656c3862d7a6db355f9a4ce6141820318f82226a6592b",
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "ultra/sparse.go",
+      "source_sha256": "f87a6d7953394cd64d87b9ec2ef68949e49f4495c78d851213080af6183a03ed",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/sparse_cost.go",
+      "output_bytes": 1978,
+      "output_sha256": "f530048bc21a9ac0e4ce7f26d3ca61f1eeb625f1a821880c0daefa171ac370b9",
+      "baseline_sha256": null,
+      "source_tree": "routing-sparse-lean-v3",
+      "source_path": "ultra/sparse_cost.go",
+      "source_sha256": "f530048bc21a9ac0e4ce7f26d3ca61f1eeb625f1a821880c0daefa171ac370b9",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "ultra/sparse_cost_test.go",
+      "output_bytes": 4129,
+      "output_sha256": "6e012027d3c07205a9de99e7c29079d968771bea6322ae1bc5cf260c714d77e6",
+      "baseline_sha256": null,
+      "source_tree": "routing-sparse-lean-v3",
+      "source_path": "ultra/sparse_cost_test.go",
+      "source_sha256": "6e012027d3c07205a9de99e7c29079d968771bea6322ae1bc5cf260c714d77e6",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "validate/journey.go",
+      "output_bytes": 8433,
+      "output_sha256": "18a068d4feedf9390f212a13d34859bdc2d57b9b5d8a82a49631e0f5c35e9f89",
+      "baseline_sha256": "467b568a761fb7e1bbb45da32d54fa1539f9fceca1e6cbb6a7e04d3d71e298ef",
+      "source_tree": "bench-safe-fill-B-q01",
+      "source_path": "vendor/github.com/ertyoii/transit-routing-go/validate/journey.go",
+      "source_sha256": "18a068d4feedf9390f212a13d34859bdc2d57b9b5d8a82a49631e0f5c35e9f89",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "validate/snapshot_test.go",
+      "output_bytes": 3910,
+      "output_sha256": "a287b843fb5afc10d24eeecb19768a91c03350009296465e1ac45685e9bfa7ca",
+      "baseline_sha256": null,
+      "transformation": "new integration documentation or regression test"
+    },
+    {
+      "path": "walking/graph/graph.go",
+      "output_bytes": 16220,
+      "output_sha256": "5fcc482edb45eb11d01928e8dffb148f00dd2a32f4649a0bb0f6cf27109cd998",
+      "baseline_sha256": "7e0965bae0f16145f23a1b273099e4b1f629d6d5f7d879b01bd3492fe5c9a80e",
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "walking/graph/graph.go",
+      "source_sha256": "5fcc482edb45eb11d01928e8dffb148f00dd2a32f4649a0bb0f6cf27109cd998",
+      "transformation": "byte-identical"
+    },
+    {
+      "path": "walking/graph/reach_session.go",
+      "output_bytes": 4755,
+      "output_sha256": "289cc3aad9a922f3b9cf97302fafa3153f639660e6ad22f1b7faab7b9ad00d3e",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "walking/graph/reach_session.go",
+      "source_sha256": "8403f7669c2e6a5058b929d8b424b81110b1297aa6101cb80a857579b6fa9436",
+      "transformation": "add error for nil/uninitialized ReachSession while preserving initial cancellation precedence and valid constructed-session behavior"
+    },
+    {
+      "path": "walking/graph/reach_session_test.go",
+      "output_bytes": 16876,
+      "output_sha256": "dd538fe7a14146398453728036f9037c2dfbc1af6c80da43453107e0212663db",
+      "baseline_sha256": null,
+      "source_tree": "routing-noncsa-noarena",
+      "source_path": "walking/graph/reach_session_test.go",
+      "source_sha256": "39a190a162ced9177960d3a571b16adbbefe6e3df45ba8489b3c9bcead0fbff5",
+      "transformation": "reject nil/uninitialized session before nil gate selection, preserving cancellation precedence; add zero-value/nil-receiver/nil-graph prompt-return and canceled-context regressions"
+    }
+  ]
+}

@@ -28,6 +28,16 @@ Earliest arrival, Pareto objective vectors, strict ordered identity top-k and bo
 
 Read the [finite identity contract](docs/CONTRACT.md), [static GTFS/resource extension](docs/CONTRACT_0.2.md), [walking API](docs/WALKING.md), [capability scope](docs/SCOPE.md) and [sources](provenance/SOURCES.md). Unsupported semantics and exhausted budgets must remain visible. Exactness applies only to an explicitly supported finite input model.
 
+## V2 runtime integration
+
+The [V2 integration notes](docs/V2_RUNTIME_INTEGRATION.md) describe the latest
+compatible non-CSA source composition: reusable walking closure sessions, dense
+RAPTOR/ULTRA state, range-RAPTOR scratch reuse, compact Trip-Based/T-REX storage,
+bounded native preparation and separately named walking-tie and finite-candidate
+selector variants. Default contracts remain separate from these opt-in policies.
+This is a newly tested library integration, not the byte-identical binary used
+for the benchmark campaign and not a new full-network timing or quality result.
+
 ## Walking integration
 
 `walking/graph` provides immutable directed paths with source witnesses. `walking/transit.FromDataset` preserves normalized footpath IDs and costs. `walking/osm` loads an already audited, hash-pinned graph; it does not turn arbitrary OSM data into a verified pedestrian network.

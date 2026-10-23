@@ -54,10 +54,26 @@ type CappedResult struct {
 // Static stop-pair rules and pickup/dropoff are supported. All paper.Profile
 // aggregate-resource and trip/route-rule guards remain in force.
 type CappedIndex struct {
-	x    *Index
-	prep CappedPreparation
-	rows map[string][]paper.Path
-	at   map[string][]occurrence
+	x           *Index
+	prep        CappedPreparation
+	stopIDs     map[string]int
+	rows        [][]cappedPath
+	at          [][]occurrence
+	from, to    [][]int
+	accessible  []bool
+	tripAllowed []bool
+	transit     []bool
+}
+
+// cappedPath retains the original raw witness, with immutable endpoint and
+// static rule metadata. A negative minimum means use the query's default buffer;
+// an explicit type-0 rule instead has minimum zero, even with a nonzero buffer.
+type cappedPath struct {
+	paper.Path
+	to        int
+	minimum   int64
+	allowed   bool
+	ruleError error
 }
 
 func (x *CappedIndex) Preparation() CappedPreparation { return x.prep }
@@ -70,7 +86,7 @@ func (x *CappedIndex) Complete() bool                 { return x.prep.Complete }
 // ordinary ULTRA work meanings. No Core-CH or timetable shortcut sparsity is
 // claimed in this mode.
 func BuildCapped(ctx context.Context, d model.Dataset, cfg CappedConfig) (out *CappedIndex, err error) {
-	out = &CappedIndex{prep: CappedPreparation{Profile: "ultra_raptor_transfer_complete_capped_v1", Config: cfg}, rows: map[string][]paper.Path{}, at: map[string][]occurrence{}}
+	out = &CappedIndex{prep: CappedPreparation{Profile: "ultra_raptor_transfer_complete_capped_v1", Config: cfg}, stopIDs: map[string]int{}}
 	defer func() {
 		out.prep.Complete = err == nil
 		if err != nil {
@@ -89,11 +105,22 @@ func BuildCapped(ctx context.Context, d model.Dataset, cfg CappedConfig) (out *C
 	}
 	x := &Index{p: p, transit: map[string]bool{}, rawOut: map[string][]model.Footpath{}, rawIn: map[string][]model.Footpath{}}
 	out.x = x
+	// Ordinals are immutable and private to this index. Queries allocate all
+	// mutable labels and caches locally, preserving concurrent-query ownership.
+	for _, stop := range p.Data.Stops {
+		out.stopIDs[stop.ID] = len(out.stopIDs)
+		out.accessible = append(out.accessible, stop.Accessible == model.Yes)
+	}
+	out.rows = make([][]cappedPath, len(out.stopIDs))
+	out.at = make([][]occurrence, len(out.stopIDs))
+	out.transit = make([]bool, len(out.stopIDs))
 	byTrip := map[string][]model.Connection{}
 	for _, c := range p.Data.Connections {
 		byTrip[c.TripID] = append(byTrip[c.TripID], c)
 		x.transit[c.From] = true
 		x.transit[c.To] = true
+		out.transit[out.stopIDs[c.From]] = true
+		out.transit[out.stopIDs[c.To]] = true
 	}
 	for _, edge := range p.Data.Footpaths {
 		if cfg.AccessibleOnly && (edge.Accessible != model.Yes || p.Stops[edge.From].Accessible != model.Yes || p.Stops[edge.To].Accessible != model.Yes) {
@@ -132,7 +159,7 @@ func BuildCapped(ctx context.Context, d model.Dataset, cfg CappedConfig) (out *C
 		if err != nil {
 			return
 		}
-		paths := []paper.Path{}
+		paths := []cappedPath{}
 		targets := []string{}
 		for target := range r.distance {
 			if x.transit[target] {
@@ -154,9 +181,14 @@ func BuildCapped(ctx context.Context, d model.Dataset, cfg CappedConfig) (out *C
 			if err != nil {
 				return
 			}
-			paths = append(paths, path)
+			decision, ruleError := p.Rules.Resolve(model.Connection{To: source}, model.Connection{From: target}, 0)
+			minimum := decision.Minimum
+			if decision.RuleID == "" {
+				minimum = -1
+			}
+			paths = append(paths, cappedPath{path, out.stopIDs[target], minimum, decision.Allowed, ruleError})
 		}
-		out.rows[source] = paths
+		out.rows[out.stopIDs[source]] = paths
 		out.prep.TransferRows++
 	}
 	return
@@ -234,11 +266,17 @@ func (x *CappedIndex) buildCappedRoutes(byTrip map[string][]model.Connection, w 
 		x.x.routes = append(x.x.routes, groups...)
 	}
 	for ri, r := range x.x.routes {
+		from := make([]int, len(r.trips[0].cs))
+		to := make([]int, len(r.trips[0].cs))
+		x.tripAllowed = append(x.tripAllowed, x.x.p.Trips[r.trips[0].id].Accessible == model.Yes)
 		for pos, c := range r.trips[0].cs {
+			from[pos], to[pos] = x.stopIDs[c.From], x.stopIDs[c.To]
 			if c.Pickup {
-				x.at[c.From] = append(x.at[c.From], occurrence{ri, pos})
+				x.at[from[pos]] = append(x.at[from[pos]], occurrence{ri, pos})
 			}
 		}
+		x.from = append(x.from, from)
+		x.to = append(x.to, to)
 	}
 	return w.check()
 }

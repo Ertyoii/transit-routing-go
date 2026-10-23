@@ -25,6 +25,14 @@ func (h flashHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
 func (h *flashHeap) Push(v any)   { *h = append(*h, v.(flashHeapItem)) }
 func (h *flashHeap) Pop() any     { a := *h; v := a[len(a)-1]; *h = a[:len(a)-1]; return v }
 func (x *FlashIndex) closeWalks(d model.Dataset, w *flashWork) error {
+	return x.closeWalksWithin(d, w, nil)
+}
+
+// closeWalksWithin retains exact directed shortest paths of length <= limit.
+// A positive path within the radius has every prefix within that radius, so
+// pruning only over-radius relaxations cannot discard a feasible endpoint or
+// intermediate vertex. Nil preserves the complete legacy metric and guards.
+func (x *FlashIndex) closeWalksWithin(d model.Dataset, w *flashWork, limit *int64) error {
 	n := len(x.names)
 	adj := make([][]model.Footpath, n)
 	for _, e := range d.Footpaths {
@@ -38,6 +46,10 @@ func (x *FlashIndex) closeWalks(d model.Dataset, w *flashWork) error {
 	for source := 0; source < n; source++ {
 		dist := map[int]int64{source: 0}
 		prev := map[int]model.Footpath{}
+		// Strictly positive validated edges make every final predecessor point
+		// to a vertex settled earlier. Depth is final when a vertex settles.
+		depth := map[int]int{source: 0}
+		settled := []int{}
 		h := &flashHeap{{source, 0}}
 		for h.Len() > 0 {
 			if e := w.tick(); e != nil {
@@ -51,16 +63,21 @@ func (x *FlashIndex) closeWalks(d model.Dataset, w *flashWork) error {
 				return fmt.Errorf("FLASH-TB incomplete: walking settlement budget exhausted")
 			}
 			x.snap.Stats.WalkSettled++
+			settled = append(settled, u.v)
 			for _, e := range adj[u.v] {
 				if e2 := w.tick(); e2 != nil {
 					return e2
 				}
 				v := x.ids[e.To]
 				value := u.distance + e.Duration
+				if limit != nil && value > *limit {
+					continue
+				}
 				old, ok := dist[v]
 				if !ok || value < old {
 					dist[v] = value
 					prev[v] = e
+					depth[v] = depth[u.v] + 1
 					heap.Push(h, flashHeapItem{v, value})
 				}
 			}
@@ -70,6 +87,22 @@ func (x *FlashIndex) closeWalks(d model.Dataset, w *flashWork) error {
 			stops = append(stops, v)
 		}
 		sort.Ints(stops)
+		// Pick one descendant leaf for each vertex. Reverse settlement order
+		// visits children before their parents, without walking any raw word
+		// ahead of its existing charged reconstruction. All metadata is local
+		// to this source and never changes routing or logical work accounting.
+		leaf := make(map[int]int, len(stops))
+		for _, v := range stops {
+			leaf[v] = v
+		}
+		for i := len(settled) - 1; i >= 0; i-- {
+			v := settled[i]
+			if v != source {
+				leaf[x.ids[prev[v].From]] = leaf[v]
+			}
+		}
+		words := map[int][]model.Footpath{}
+		published := map[int]int{}
 		for _, v := range stops {
 			if e := w.tick(); e != nil {
 				return e
@@ -79,16 +112,31 @@ func (x *FlashIndex) closeWalks(d model.Dataset, w *flashWork) error {
 			}
 			x.snap.Stats.ClosurePaths++
 			p := paper.Path{To: x.names[v], Duration: dist[v], Edges: []model.Footpath{}}
+			owner := leaf[v]
+			word := words[owner]
 			for u := v; u != source; {
 				if e := w.tick(); e != nil {
 					return e
 				}
 				edge := prev[u]
-				p.Edges = append(p.Edges, edge)
+				if word == nil {
+					// Allocate only after the original first successful hop tick.
+					// The unseen suffix may remain uninitialized until a later
+					// target, but no published prefix is ever written again.
+					word = make([]model.Footpath, depth[owner])
+					words[owner] = word
+				}
+				position := depth[u] - 1
+				if position >= published[owner] {
+					word[position] = edge
+				}
 				u = x.ids[edge.From]
 			}
-			for i, j := 0, len(p.Edges)-1; i < j; i, j = i+1, j-1 {
-				p.Edges[i], p.Edges[j] = p.Edges[j], p.Edges[i]
+			if length := depth[v]; length > 0 {
+				published[owner] = max(published[owner], length)
+				// Capacity limiting prevents append from touching another path's
+				// suffix. Consumers must also keep visible elements immutable.
+				p.Edges = word[:length:length]
 			}
 			x.walks[source] = append(x.walks[source], p)
 			x.snap.ClosureDiameter = max(x.snap.ClosureDiameter, p.Duration)

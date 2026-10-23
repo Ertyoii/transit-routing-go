@@ -70,7 +70,7 @@ func (x *TREXIndex) traceTREX(node *trexNode, exit int, egress *paper.Path, depa
 	for i, n := range nodes {
 		last := exit
 		if i+1 < len(nodes) {
-			last = x.edges[nodes[i+1].edge].exit
+			last = x.edgeAt(nodes[i+1].edge).exit
 		}
 		if last < n.board || last >= len(x.base.trips[n.trip].cs) {
 			return ids, fmt.Errorf("T-REX internal: invalid witness segment")
@@ -88,7 +88,7 @@ func (x *TREXIndex) traceTREX(node *trexNode, exit int, egress *paper.Path, depa
 		if i+1 < len(nodes) {
 			id := nodes[i+1].edge
 			ids = append(ids, id)
-			if e := appendWalk(x.edges[id].walk, at); e != nil {
+			if e := appendWalk(x.edgeAt(id).walk, at); e != nil {
 				return ids, e
 			}
 		} else if e := appendWalk(egress, at); e != nil {
@@ -268,15 +268,16 @@ func (x *TREXIndex) eventTREX(ctx context.Context, source, board, level, cell in
 				if e := x.tick(ctx); e != nil {
 					return e
 				}
-				for _, id := range x.byEvent[s.trip][p] {
+				row := x.byEvent[s.trip][p]
+				for id := row.begin; id < row.end; id++ {
 					if e := x.tick(ctx); e != nil {
 						return e
 					}
 					if int(x.ranks[id]) < level {
 						continue
 					}
-					edge := x.edges[id]
-					if e := enqueue(&next, edge.to, edge.board, id, s.node); e != nil {
+					edge := x.edgeTarget(id)
+					if e := enqueue(&next, edge.trip, edge.board, id, s.node); e != nil {
 						return e
 					}
 				}

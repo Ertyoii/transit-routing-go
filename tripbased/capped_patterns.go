@@ -219,7 +219,10 @@ func buildDestinationCappedPatternsForDomain(ctx context.Context, d model.Datase
 	d.ID = fmt.Sprintf("%s::tp-absorbing-%x", x.sourceID, sha256.Sum256([]byte(c.Destination)))
 	x.conditionedID = d.ID
 	start := time.Now()
-	p.base, err = BuildFlash(ctx, d, fc) // complete base links; no all-source profiles
+	// A complete walking block is bounded by its role, not by each raw edge.
+	// Keep the union of all four role radii for profiles, and only Transfer for
+	// the base links. The destination was made absorbing before either search.
+	p.base, err = buildFlashWithWalkingScope(ctx, d, fc, nil, &c.Walking)
 	p.snap.PhasesNS["conditioned_base_graph"] = time.Since(start).Nanoseconds()
 	if err != nil {
 		return
@@ -350,7 +353,7 @@ func (x *DestinationCappedPatternIndex) buildProfiles(ctx context.Context) error
 				return fmt.Errorf("fixed-cap TP incomplete: native profile segment guard")
 			}
 			view := *b.base
-			view.cfg.TransferWalkingLimit = model.MaxServiceSecond // COMPLETE metric, not a radius truncation
+			view.cfg.TransferWalkingLimit = x.cfg.Walking.Transfer // matches the prepared fixed transfer radius
 			view.cfg.MaxQueuedSegments = min(view.cfg.MaxQueuedSegments, remaining)
 			wl := x.cfg.Walking
 			q := model.Query{ID: "fixed-cap-tp-profile", Origin: name, Destination: x.cfg.Destination, Departure: at, LatestArrival: upper, MaxBoardings: p.cfg.Profile.MaxBoardings, MaxLegs: x.cfg.ProfileMaxLegs, MaxWalkSeconds: x.cfg.ProfileMaxWalkingSeconds, Walking: &wl}

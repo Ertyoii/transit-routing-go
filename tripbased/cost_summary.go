@@ -15,6 +15,9 @@ func (x *FlashIndex) CostSummary() json.RawMessage {
 		return json.RawMessage("null")
 	}
 	v := map[string]any{"complete": x.snap.Complete, "error": x.snap.Error, "stats": x.snap.Stats, "phases_ns": x.snap.PhasesNS, "lines": len(x.snap.Lines), "transfers": len(x.snap.Transfers), "witnesses": len(x.snap.Witnesses), "closure_diameter": x.snap.ClosureDiameter}
+	if x.snap.WalkingClosureLimit != nil {
+		v["walking_closure_limit"] = *x.snap.WalkingClosureLimit
+	}
 	if x.cfg.Semantics != "" {
 		v["profile"] = x.snap.Profile
 		v["transfer_construction"] = x.snap.TransferConstruction
@@ -74,6 +77,10 @@ func (x *TREXIndex) CostSummary() json.RawMessage {
 	if x == nil {
 		return json.RawMessage("null")
 	}
-	b, _ := json.Marshal(map[string]any{"complete": x.snap.Complete, "error": x.snap.Error, "stats": x.snap.Stats, "phases": x.snap.Phases, "lines": len(x.snap.Lines), "transfers": len(x.edges), "witnesses": x.proofs.count, "closure_diameter": x.snap.ClosureDiameter})
+	v := map[string]any{"complete": x.snap.Complete, "error": x.snap.Error, "stats": x.snap.Stats, "phases": x.snap.Phases, "lines": len(x.snap.Lines), "transfers": x.edgeCount(), "witnesses": x.proofs.count, "closure_diameter": x.snap.ClosureDiameter}
+	if x.snap.WalkingClosureLimit != nil {
+		v["walking_closure_limit"] = *x.snap.WalkingClosureLimit
+	}
+	b, _ := json.Marshal(v)
 	return b
 }

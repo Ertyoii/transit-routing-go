@@ -10,18 +10,20 @@ import (
 )
 
 type TREXQueryStats struct {
-	Mode           string `json:"mode"`
-	Work           int    `json:"work"`
-	Rounds         int    `json:"rounds"`
-	QueuedSegments int    `json:"queued_segments"`
-	SplitSegments  int    `json:"split_segments"`
-	TargetEvents   int    `json:"target_events"`
-	TargetPruned   int    `json:"target_pruned"`
-	TransferVisits int    `json:"transfer_visits"`
-	RankTests      int    `json:"rank_tests"`
-	RankRejected   int    `json:"rank_rejected"`
-	ReachedUpdates int    `json:"reached_updates"`
-	UnpackedLegs   int    `json:"unpacked_legs"`
+	EndpointWalkWork    int    `json:"endpoint_walk_work,omitempty"`
+	EndpointWalkSettled int    `json:"endpoint_walk_settled,omitempty"`
+	Mode                string `json:"mode"`
+	Work                int    `json:"work"`
+	Rounds              int    `json:"rounds"`
+	QueuedSegments      int    `json:"queued_segments"`
+	SplitSegments       int    `json:"split_segments"`
+	TargetEvents        int    `json:"target_events"`
+	TargetPruned        int    `json:"target_pruned"`
+	TransferVisits      int    `json:"transfer_visits"`
+	RankTests           int    `json:"rank_tests"`
+	RankRejected        int    `json:"rank_rejected"`
+	ReachedUpdates      int    `json:"reached_updates"`
+	UnpackedLegs        int    `json:"unpacked_legs"`
 }
 type TREXResult struct {
 	Journeys []model.Journey `json:"journeys"`
@@ -59,6 +61,12 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 	// original unrestricted customization is not a cap-preservation proof.
 	roleCaps := bounded || mode == "overlay-role-caps"
 	overlay := mode == "overlay" || mode == "overlay-role-caps"
+	if x.snap.WalkingClosureLimit != nil && !roleCaps {
+		// Preserve the original public nonbinding entrypoints on fixed-cap
+		// indexes. Their certification needs the COMPLETE metric, never the
+		// bounded transfer diameter. The immutable fallback is charged here.
+		return x.searchTREXCompleteWalking(ctx, q, mode, capCertificate)
+	}
 	if bounded || capCertificate {
 		err = x.checkTREXResources(ctx, q)
 	} else {
@@ -122,8 +130,22 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 		return nil
 	}
 	bestArrival := q.LatestArrival + 1
-	for wi := range x.walks[source] {
-		w := &x.walks[source][wi]
+	access := x.walks[source]
+	var egressCache map[int]*paper.Path
+	if x.snap.WalkingClosureLimit != nil {
+		access, err = x.endpointWalks(ctx, source, -1, max(q.Walking.Access, q.Walking.Direct), target, charge, &out.Stats)
+		if err != nil {
+			return
+		}
+		// A shortest path ending at destination cannot pass through it and
+		// leave again (positive edges). Prepared paths already suffice when
+		// Egress fits the transfer radius; only a larger role needs lazy work.
+		if q.Walking.Egress > *x.snap.WalkingClosureLimit {
+			egressCache = map[int]*paper.Path{}
+		}
+	}
+	for wi := range access {
+		w := &access[wi]
 		if err = charge(); err != nil {
 			return
 		}
@@ -216,6 +238,23 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 					break
 				}
 				p := x.walkMap[x.ids[c.To]][target]
+				if egressCache != nil {
+					from := x.ids[c.To]
+					var exists bool
+					p, exists = egressCache[from]
+					if !exists {
+						p = nil
+						var paths []paper.Path
+						paths, err = x.endpointWalks(ctx, from, target, q.Walking.Egress, target, charge, &out.Stats)
+						if err != nil {
+							return
+						}
+						if len(paths) > 0 {
+							p = &paths[0]
+						}
+						egressCache[from] = p
+					}
+				}
 				if p != nil && (!roleCaps || p.Duration <= q.Walking.Egress) && c.Arrival+p.Duration < arrival {
 					arrival = c.Arrival + p.Duration
 					found = s.node
@@ -262,23 +301,25 @@ func (x *TREXIndex) searchTREXForCertificate(ctx context.Context, q model.Query,
 			}
 			o := x.overlays[level]
 			begin, end := o.starts[x.offsets[s.trip]+s.begin], o.starts[x.offsets[s.trip]+s.end]
-			for _, id := range o.edges[begin:end] {
+			for oi := begin; oi < end; oi++ {
+				id := o.edgeAt(oi)
 				if err = charge(); err != nil {
 					return
 				}
 				out.Stats.TransferVisits++
-				edge := x.edges[id]
+				edge := x.edgeTarget(id)
 				if roleCaps && (edge.walk.Duration > q.Walking.Transfer || edge.walk.To == q.Destination) {
 					continue
 				}
 				if mode == "rank-test" {
 					out.Stats.RankTests++
-					if int(x.ranks[id]) < relevant(x.base.trips[edge.from].cs[edge.exit].To) {
+					source := x.edgeAt(id)
+					if int(x.ranks[id]) < relevant(x.base.trips[source.from].cs[source.exit].To) {
 						out.Stats.RankRejected++
 						continue
 					}
 				}
-				if err = enqueue(&next, edge.to, edge.board, id, s.node, nil); err != nil {
+				if err = enqueue(&next, edge.trip, edge.board, id, s.node, nil); err != nil {
 					return
 				}
 			}

@@ -88,18 +88,18 @@ func (x *TREXIndex) expandTREXProof(p trexProof) (TREXWitness, error) {
 		return bad()
 	}
 	for _, id := range p.ids[:p.count] {
-		if id < 0 || id >= len(x.edges) {
+		if id < 0 || id >= x.edgeCount() {
 			return bad()
 		}
 	}
-	first := x.edges[p.ids[0]]
+	first := x.edgeAt(p.ids[0])
 	source := first.from
 	if source < 0 || source >= len(x.base.trips) || p.board < 0 || p.board >= len(x.base.trips[source].cs) {
 		return bad()
 	}
 	node := &trexNode{trip: source, board: p.board, edge: -1}
 	for _, id := range p.ids[:p.count] {
-		e := x.edges[id]
+		e := x.edgeAt(id)
 		if e.from != node.trip || e.exit < node.board || e.exit >= len(x.base.trips[node.trip].cs) || e.to < 0 || e.to >= len(x.base.trips) || e.board < 0 || e.board >= len(x.base.trips[e.to].cs) {
 			return bad()
 		}

@@ -156,7 +156,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 		return nil
 	}
 	walker := x.p.Walker(q)
-	walks := orderedWalks{walker: walker, enabled: cfg.EarlyPruning, cache: map[string][]paper.Path{}}
+	walks := x.indexedWalks(walker, q, cfg.EarlyPruning)
 	dominated := func(at, walk int64, boards int) bool {
 		for _, a := range answers {
 			out.Stats.EarlyPruning.DominanceChecks++
@@ -167,7 +167,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 		return false
 	}
 	defer func() { out.Stats.WalkClosures = walker.Count }()
-	paths, e := walks.paths(ctx, q.Origin)
+	paths, states, e := walks.paths(ctx, q.Origin, x.stopIDs[q.Origin])
 	if e != nil {
 		err = e
 		return
@@ -196,7 +196,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 		}
 		if w.Duration <= q.Walking.Access {
 			var e error
-			stop := x.stopIDs[w.To]
+			stop := states[i].stop
 			wasEmpty := len(previous[stop]) == 0
 			previous[stop], _, e = addStop(previous[stop], multiLabel{at, w.Duration, nil}, w, q.Departure)
 			if wasEmpty && len(previous[stop]) > 0 {
@@ -208,18 +208,27 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 			}
 		}
 	}
+	next := make([][]multiLabel, len(x.atStop))
+	nextStops := []int{}
+	queue := make([]int, len(x.routes))
+	routes := []int{}
+	bag := []routeLabel{}
 	for boards := 1; boards <= q.MaxBoardings && len(previousStops) > 0; boards++ {
 		if err = ctx.Err(); err != nil {
 			return
 		}
 		out.Stats.Rounds++
-		queue, routes := x.collectRoutes(previousStops)
-		next := make([][]multiLabel, len(x.atStop))
-		nextStops := []int{}
+		queue, routes = x.collectRoutesInto(previousStops, queue, routes)
+		for _, stop := range nextStops {
+			clear(next[stop][:cap(next[stop])])
+			next[stop] = next[stop][:0]
+		}
+		nextStops = nextStops[:0]
 		for _, r := range routes {
 			out.Stats.Routes++
 			route := x.routes[r]
-			bag := []routeLabel{}
+			clear(bag[:cap(bag)])
+			bag = bag[:0]
 			for i := queue[r] - 1; i < len(route.trips[0].cs); i++ {
 				if err = ctx.Err(); err != nil {
 					return
@@ -269,7 +278,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 						continue
 					}
 					continuing = append(continuing, l)
-					paths, e := walks.paths(ctx, c.To)
+					paths, states, e := walks.paths(ctx, c.To, route.to[i])
 					if e != nil {
 						err = e
 						return
@@ -297,7 +306,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 						if boards == q.MaxBoardings || w.Duration > q.Walking.Transfer {
 							continue
 						}
-						at, allowed, e := x.p.ReadyTime(q, c.To, w.To, c.Arrival, w.Duration)
+						at, allowed, e := walks.readyTime(&states[i], c.To, w, c.Arrival)
 						if e != nil {
 							err = e
 							return
@@ -305,7 +314,7 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 						if !allowed || at > q.LatestArrival {
 							continue
 						}
-						stop := x.stopIDs[w.To]
+						stop := states[i].stop
 						newBag, _, e := addStop(next[stop], multiLabel{at, l.walk + w.Duration, l.parent}, w, c.Arrival)
 						if e != nil {
 							err = e
@@ -321,7 +330,8 @@ func (x *Index) SearchMulti(ctx context.Context, q model.Query, cfg MultiConfig)
 				bag = continuing
 			}
 		}
-		previous, previousStops = next, nextStops
+		previous, next = next, previous
+		previousStops, nextStops = nextStops, previousStops
 	}
 	return
 }

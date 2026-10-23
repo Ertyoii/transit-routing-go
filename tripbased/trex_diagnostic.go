@@ -4,6 +4,7 @@ package tripbased
 // remain in Snapshot; this view never expands or copies those large collections.
 // Call only after preparation returns, as with Snapshot.
 type TREXDiagnostic struct {
+	WalkingClosureLimit     *int64               `json:"walking_closure_limit,omitempty"`
 	FixedTransferWalkingCap *int64               `json:"fixed_transfer_walking_cap,omitempty"`
 	Profile                 string               `json:"profile"`
 	Complete                bool                 `json:"complete"`
@@ -22,9 +23,13 @@ func (x *TREXIndex) Diagnostic() TREXDiagnostic {
 	s := x.snap
 	out := TREXDiagnostic{Profile: s.Profile, Complete: s.Complete, Error: s.Error,
 		Config: s.Config, Stats: s.Stats, ClosureDiameter: s.ClosureDiameter,
-		RetainedTransfers: len(x.edges), RetainedWitnesses: x.proofs.count,
+		RetainedTransfers: x.edgeCount(), RetainedWitnesses: x.proofs.count,
 		PartitionStops: len(s.Partition.Cells), WalkingComponents: s.Partition.Components,
 		Phases: make(map[string]TREXPhase, len(s.Phases))}
+	if s.WalkingClosureLimit != nil {
+		limit := *s.WalkingClosureLimit
+		out.WalkingClosureLimit = &limit
+	}
 	if x.staticRulesCandidate && x.transferWalkLimit != nil {
 		cap := *x.transferWalkLimit
 		out.FixedTransferWalkingCap = &cap

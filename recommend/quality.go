@@ -45,10 +45,14 @@ type Selection struct {
 	GlobalOptimalityClaim bool              `json:"global_optimality_claim"`
 }
 type Result struct {
-	Choices    *Choices    `json:"choices,omitempty"`
-	Policy     string      `json:"policy"`
-	Features   []Feature   `json:"features"`
-	Selections []Selection `json:"selections"`
+	FiniteSafeChoices *FiniteSafeResult  `json:"finite20_safe_choices,omitempty"`
+	HybridFillChoices *HybridFillResult  `json:"absolute_hybrid_fill_choices,omitempty"`
+	ContinuousChoices *ContinuousChoices `json:"continuous_choices,omitempty"`
+	FeatureMode       string             `json:"feature_mode,omitempty"`
+	Choices           *Choices           `json:"choices,omitempty"`
+	Policy            string             `json:"policy"`
+	Features          []Feature          `json:"features"`
+	Selections        []Selection        `json:"selections"`
 }
 type routeIdentity struct {
 	Missing bool
@@ -56,6 +60,7 @@ type routeIdentity struct {
 }
 
 type Index struct {
+	lean            bool
 	checker         *validate.Checker
 	rules           *transfer.Resolver
 	connections     map[string]model.Connection
@@ -97,9 +102,48 @@ func New(d model.Dataset) (*Index, error) {
 	return x, nil
 }
 
+// NewBoundedFromChecker reuses exactly the checker's owned immutable snapshot.
+// No Dataset argument exists, so a recommendation/checker snapshot mismatch is
+// impossible by construction. No duplicate validation/connection/recovery index
+// is built. This index supports opt-in bounded, lean, finite-safe and hybrid-fill
+// evaluation, but not the legacy Evaluate path with recovery enumeration.
+func NewBoundedFromChecker(c *validate.Checker) (*Index, error) {
+	if c == nil || c.DatasetFingerprint() == "" {
+		return nil, fmt.Errorf("bounded recommendation requires an initialized checker")
+	}
+	return &Index{checker: c, lean: true}, nil
+}
+func (x *Index) connection(id string) model.Connection {
+	if x.lean {
+		v, _ := x.checker.Connection(id)
+		return v
+	}
+	return x.connections[id]
+}
+func (x *Index) route(tid string) (string, routeIdentity) {
+	if !x.lean {
+		return x.routes[tid], x.routeKeys[tid]
+	}
+	t, _ := x.checker.Trip(tid)
+	if t.RouteID == "" {
+		return "trip:" + t.ID, routeIdentity{Missing: true, ID: t.ID}
+	}
+	return t.RouteID, routeIdentity{ID: t.RouteID}
+}
+func (x *Index) decision(from, to model.Connection, fallback int64) (transfer.Decision, error) {
+	if !x.lean {
+		return x.rules.Resolve(from, to, fallback)
+	}
+	allowed, minimum, err := x.checker.TransferDecision(from, to, fallback)
+	return transfer.Decision{Allowed: allowed, Minimum: minimum}, err
+}
+
 // Evaluate independently validates every supplied witness, including its times.
 // Its cost is presentation overhead; it does not upgrade the pool's certificate.
 func (x *Index) Evaluate(q model.Query, js []model.Journey) (Result, error) {
+	if x.lean {
+		return Result{}, fmt.Errorf("lean recommendation index does not support legacy recovery evaluation")
+	}
 	if _, e := x.checker.Binding(q); e != nil {
 		return Result{}, e
 	}
@@ -114,7 +158,7 @@ func (x *Index) Evaluate(q model.Query, js []model.Journey) (Result, error) {
 			continue
 		}
 		seen[v.Identity] = true
-		f, e := x.measure(q, v)
+		f, e := x.measure(q, v, true)
 		if e != nil {
 			return Result{}, e
 		}
@@ -128,7 +172,7 @@ func (x *Index) Evaluate(q model.Query, js []model.Journey) (Result, error) {
 	}
 	return out, nil
 }
-func (x *Index) measure(q model.Query, v model.Validated) (Feature, error) {
+func (x *Index) measure(q model.Query, v model.Validated, recovery bool) (Feature, error) {
 	f := Feature{Identity: v.Identity, Metrics: v.Metrics, Duration: v.Metrics.Arrival - q.Departure, Transfers: []Interchange{}}
 	type token struct {
 		Kind         string
@@ -153,21 +197,21 @@ func (x *Index) measure(q model.Query, v model.Validated) (Feature, error) {
 			tokens = append(tokens, token{Kind: "walk", Walk: l.Ref})
 			last = nil
 		} else {
-			c := x.connections[l.Ref]
+			c := x.connection(l.Ref)
 			continuing := last != nil && last.TripID == c.TripID && last.Sequence+1 == c.Sequence
 			f.Ride += l.Arrival - l.Departure
 			if !continuing {
-				route := x.routes[c.TripID]
-				if seenRoutes[x.routeKeys[c.TripID]] {
+				route, key := x.route(c.TripID)
+				if seenRoutes[key] {
 					f.SameRouteReboardings++
 				}
-				seenRoutes[x.routeKeys[c.TripID]] = true
+				seenRoutes[key] = true
 				if firstRide {
 					f.InitialWait = l.Departure - q.Departure - v.Metrics.AccessWalking
 					firstRide = false
 				}
 				if previous != nil {
-					rule, e := x.rules.Resolve(*previous, c, q.TransferBuffer)
+					rule, e := x.decision(*previous, c, q.TransferBuffer)
 					if e != nil {
 						return Feature{}, e
 					}
@@ -177,7 +221,7 @@ func (x *Index) measure(q model.Query, v model.Validated) (Feature, error) {
 					}
 					f.Transfers = append(f.Transfers, Interchange{From: previous.ID, To: c.ID, Ready: ready, Slack: c.Departure - ready, Recovery: []Recovery{}})
 				}
-				tokens = append(tokens, token{Kind: "ride", Route: route, MissingRoute: x.routeKeys[c.TripID].Missing, Stops: []string{c.From, c.To}})
+				tokens = append(tokens, token{Kind: "ride", Route: route, MissingRoute: key.Missing, Stops: []string{c.From, c.To}})
 				blocks = append(blocks, []model.Connection{c})
 			} else {
 				tokens[len(tokens)-1].Stops = append(tokens[len(tokens)-1].Stops, c.To)
@@ -191,6 +235,9 @@ func (x *Index) measure(q model.Query, v model.Validated) (Feature, error) {
 	}
 	b, _ := json.Marshal(tokens)
 	f.Pattern = string(b)
+	if !recovery {
+		return f, nil
+	}
 	for i := range f.Transfers {
 		block := blocks[i+1]
 		first, end := block[0], block[len(block)-1]

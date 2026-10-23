@@ -142,13 +142,15 @@ func BuildSparse(ctx context.Context, d model.Dataset, cfg SparseConfig) (out *S
 		incoming[stop] = cs
 	}
 	sources := []string{}
-	for from := range out.index.rows {
-		sources = append(sources, from)
+	for from := range out.index.x.transit {
+		if out.index.rows[out.index.stopIDs[from]] != nil {
+			sources = append(sources, from)
+		}
 	}
 	sort.Strings(sources)
 	for _, from := range sources {
-		kept := []paper.Path{}
-		for _, path := range out.index.rows[from] {
+		kept := []cappedPath{}
+		for _, path := range out.index.rows[out.index.stopIDs[from]] {
 			if err = check(); err != nil {
 				return
 			}
@@ -245,7 +247,7 @@ func BuildSparse(ctx context.Context, d model.Dataset, cfg SparseConfig) (out *S
 				out.prep.RetainedPairs++
 			}
 		}
-		out.index.rows[from] = kept
+		out.index.rows[out.index.stopIDs[from]] = kept
 	}
 	return
 }

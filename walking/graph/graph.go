@@ -38,6 +38,12 @@ type Graph struct {
 	edges      map[string]walking.Segment
 	out        map[string][]walking.Segment
 	limits     Limits
+	// Canonical node ordinals preserve the existing lexical queue tie order.
+	nodeIndex    map[string]int
+	nodeIDs      []string
+	accessible   []bool
+	indexedEdges []walking.Segment
+	indexedOut   [][]indexedEdge
 }
 
 func New(d Data, limits Limits) (*Graph, error) {
@@ -101,6 +107,20 @@ func New(d Data, limits Limits) (*Graph, error) {
 		return nil, walking.ErrStale
 	}
 	g.descriptor = d.Descriptor
+	g.nodeIndex = make(map[string]int, len(d.Nodes))
+	g.nodeIDs = make([]string, len(d.Nodes))
+	g.accessible = make([]bool, len(d.Nodes))
+	g.indexedOut = make([][]indexedEdge, len(d.Nodes))
+	for i, n := range d.Nodes {
+		g.nodeIndex[n.ID] = i
+		g.nodeIDs[i] = n.ID
+		g.accessible[i] = n.Accessible == walking.Yes
+	}
+	g.indexedEdges = d.Edges
+	for i, e := range d.Edges {
+		from, to := g.nodeIndex[e.From], g.nodeIndex[e.To]
+		g.indexedOut[from] = append(g.indexedOut[from], indexedEdge{to: to, edge: i})
+	}
 	return g, nil
 }
 func (g *Graph) Descriptor() walking.Descriptor {
@@ -165,12 +185,14 @@ func (q *queue) Push(x any)   { *q = append(*q, x.(entry)) }
 func (q *queue) Pop() any     { a := *q; v := a[len(a)-1]; *q = a[:len(a)-1]; return v }
 
 type search struct {
-	dist map[string]int64
-	prev map[string]walking.Segment
+	dist  map[string]int64
+	prev  map[string]walking.Segment
+	dense *reachScratch
+	graph *Graph
 }
 
 func (g *Graph) search(ctx context.Context, from string, o walking.Options) (search, error) {
-	s := search{map[string]int64{from: 0}, map[string]walking.Segment{}}
+	s := search{dist: map[string]int64{from: 0}, prev: map[string]walking.Segment{}}
 	h := &queue{{from, 0}}
 	settled, visits := 0, 0
 	for h.Len() > 0 {
@@ -216,13 +238,29 @@ func (g *Graph) search(ctx context.Context, from string, o walking.Options) (sea
 	}
 	return s, nil
 }
+func (s search) distance(to string) (int64, bool) {
+	if s.dense != nil {
+		i := s.graph.nodeIndex[to]
+		return s.dense.dist[i], s.dense.seen[i] == s.dense.generation
+	}
+	v, ok := s.dist[to]
+	return v, ok
+}
+func (s search) previous(to string) walking.Segment {
+	if s.dense != nil {
+		return s.graph.indexedEdges[s.dense.prev[s.graph.nodeIndex[to]]]
+	}
+	return s.prev[to]
+}
 func (g *Graph) result(ctx context.Context, from, to string, s search, remaining *int) (walking.Result, error) {
 	r := walking.Result{SnapshotID: g.descriptor.SnapshotID, From: from, To: to, Status: walking.Unreachable}
-	seconds, ok := s.dist[to]
+	seconds, ok := s.distance(to)
 	if !ok {
 		return r, nil
 	}
-	p := walking.Path{SnapshotID: r.SnapshotID, From: from, To: to, Seconds: seconds, Segments: []walking.Segment{}}
+	// Count first so the returned witness needs one exact-sized segment buffer.
+	// The old append-then-CloneResult path copied every segment buffer twice.
+	count := 0
 	for at := to; at != from; {
 		if e := ctx.Err(); e != nil {
 			return walking.Result{}, e
@@ -231,16 +269,25 @@ func (g *Graph) result(ctx context.Context, from, to string, s search, remaining
 			return walking.Result{}, walking.ErrBudget
 		}
 		*remaining--
-		edge := s.prev[at]
-		p.Segments = append(p.Segments, edge)
-		at = edge.From
+		count++
+		at = s.previous(at).From
 	}
-	for i, j := 0, len(p.Segments)-1; i < j; i, j = i+1, j-1 {
-		p.Segments[i], p.Segments[j] = p.Segments[j], p.Segments[i]
+	p := walking.Path{SnapshotID: r.SnapshotID, From: from, To: to, Seconds: seconds, Segments: make([]walking.Segment, count)}
+	at := to
+	for i := count - 1; i >= 0; i-- {
+		if e := ctx.Err(); e != nil {
+			return walking.Result{}, e
+		}
+		edge := s.previous(at)
+		// Segment values only contain one mutable child. Copy it exactly once so
+		// callers cannot mutate the immutable graph or another response's witness.
+		edge.Witness.EdgeIDs = append([]string{}, edge.Witness.EdgeIDs...)
+		p.Segments[i] = edge
+		at = edge.From
 	}
 	r.Status = walking.Reachable
 	r.Path = &p
-	return walking.CloneResult(r), nil
+	return r, nil
 }
 func (g *Graph) Route(ctx context.Context, r walking.Request) (walking.Result, error) {
 	if e := g.check(ctx, r.SnapshotID, r.From, r.Options); e != nil {
@@ -310,6 +357,9 @@ func (g *Graph) Reach(ctx context.Context, r walking.ReachRequest) (walking.Reac
 // targets. A nil set follows ordinary Reach semantics. A nonnil empty set selects
 // no nodes except explicit request targets; no hidden endpoint is added.
 func (g *Graph) ReachWithTargets(ctx context.Context, r walking.ReachRequest, selected *TargetSet) (walking.ReachResult, error) {
+	return g.reachWithTargets(ctx, r, selected, nil)
+}
+func (g *Graph) reachWithTargets(ctx context.Context, r walking.ReachRequest, selected *TargetSet, scratch *reachScratch) (walking.ReachResult, error) {
 	if e := ctx.Err(); e != nil {
 		return walking.ReachResult{}, e
 	}
@@ -334,19 +384,44 @@ func (g *Graph) ReachWithTargets(ctx context.Context, r walking.ReachRequest, se
 	if e := g.check(ctx, r.SnapshotID, r.From, r.Options); e != nil {
 		return walking.ReachResult{}, e
 	}
-	s, e := g.search(ctx, r.From.NodeID, r.Options)
+	var s search
+	var e error
+	if scratch == nil {
+		s, e = g.search(ctx, r.From.NodeID, r.Options)
+	} else {
+		s, e = g.searchDense(ctx, r.From.NodeID, r.Options, scratch)
+	}
 	if e != nil {
 		return walking.ReachResult{}, e
 	}
-	keys := make([]string, 0, len(s.dist))
-	for k := range s.dist {
+	reached := len(s.dist)
+	if scratch != nil {
+		reached = len(scratch.touched)
+	}
+	capacity := reached
+	if selected != nil {
+		capacity = min(capacity, len(selected.ids)+len(targets))
+	} else if len(targets) > 0 {
+		capacity = min(capacity, len(targets))
+	}
+	keys := make([]string, 0, capacity)
+	include := func(k string) {
 		if (selected != nil || len(targets) > 0) && !targets[k] && (selected == nil || !selected.ids[k]) {
-			continue
+			return
 		}
 		keys = append(keys, k)
 	}
+	if scratch != nil {
+		for _, i := range scratch.touched {
+			include(g.nodeIDs[i])
+		}
+	} else {
+		for k := range s.dist {
+			include(k)
+		}
+	}
 	sort.Strings(keys)
-	out := walking.ReachResult{SnapshotID: g.descriptor.SnapshotID, Paths: []walking.Path{}}
+	out := walking.ReachResult{SnapshotID: g.descriptor.SnapshotID, Paths: make([]walking.Path, 0, len(keys))}
 	remaining := g.limits.MaxResultSegments
 	for _, k := range keys {
 		if e := ctx.Err(); e != nil {

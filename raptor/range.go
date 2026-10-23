@@ -45,18 +45,24 @@ func (x *Index) SearchRange(ctx context.Context, q profilequery.Query, limits pr
 		err = e
 		return
 	}
-	access := map[string]paper.Path{}
-	for _, w := range paths {
+	type accessStop struct{ stop, path int }
+	accessStops := []accessStop{}
+	for i, w := range paths {
 		if w.To == bq.Destination {
 			if w.Duration <= bq.Walking.Direct && bq.Departure+w.Duration <= bq.LatestArrival {
 				out.Direct = &profilequery.Direct{Duration: w.Duration, Journey: paper.Journey(w.Append(nil, bq.Departure))}
 			}
 		} else if w.Duration <= bq.Walking.Access {
-			access[w.To] = w
+			accessStops = append(accessStops, accessStop{x.stopIDs[w.To], i})
 		}
 	}
 	if bq.Origin == bq.Destination || bq.MaxBoardings == 0 {
 		return
+	}
+	// Zero means absent; other entries reference the immutable origin closure.
+	accessPath := make([]int, len(x.atStop))
+	for _, a := range accessStops {
+		accessPath[a.stop] = a.path + 1
 	}
 	// The upper ready boundary also represents all useful first departures after
 	// that boundary. Other critical times are vehicle departure minus access walk.
@@ -66,11 +72,12 @@ func (x *Index) SearchRange(ctx context.Context, q profilequery.Query, limits pr
 			return
 		}
 		out.Stats.DepartureEventChecks++
-		w, ok := access[c.From]
-		if !ok || !c.Pickup || c.Arrival > bq.LatestArrival || !x.p.TripAllowed(bq, c.TripID) {
+		stop := x.stopIDs[c.From]
+		path := accessPath[stop]
+		if path == 0 || !c.Pickup || c.Arrival > bq.LatestArrival || !x.p.TripAllowed(bq, c.TripID) {
 			continue
 		}
-		t := c.Departure - w.Duration
+		t := c.Departure - paths[path-1].Duration
 		if t >= bq.Departure && t <= q.End {
 			times[t] = true
 		}
@@ -84,10 +91,12 @@ func (x *Index) SearchRange(ctx context.Context, q profilequery.Query, limits pr
 		err = fmt.Errorf("range RAPTOR incomplete: departure iteration budget exhausted")
 		return
 	}
-	ready := make([]map[string]rangeLabel, bq.MaxBoardings+1)
+	// Exact-round readiness persists across descending departure iterations. Rows
+	// are allocated lazily, so an unused boarding round has no stop-sized cost.
+	ready := make([][]rangeLabel, bq.MaxBoardings+1)
+	readySet := make([][]bool, bq.MaxBoardings+1)
 	best := make([]rangeLabel, bq.MaxBoardings+1)
 	for b := range ready {
-		ready[b] = map[string]rangeLabel{}
 		best[b].time = paper.Infinity
 	}
 	spend := func() error {
@@ -108,19 +117,26 @@ func (x *Index) SearchRange(ctx context.Context, q profilequery.Query, limits pr
 		out.Points = append(out.Points, profilequery.Point{LatestReady: start, Arrival: arrival, Boardings: b, Journey: paper.Journey(parent)})
 		return nil
 	}
-	accessStops := []string{}
-	for s := range access {
-		accessStops = append(accessStops, s)
-	}
-	sort.Strings(accessStops)
+	// Native access insertion is stop-name sorted; retain that witness/budget order.
+	sort.Slice(accessStops, func(i, j int) bool {
+		return paths[accessStops[i].path].To < paths[accessStops[j].path].To
+	})
+	walks := x.indexedWalks(walker, bq, false)
+	ready[0] = make([]rangeLabel, len(x.atStop))
+	readySet[0] = make([]bool, len(x.atStop))
+	changed, nextChanged := []int{}, []int{}
+	nextSet := make([]bool, len(x.atStop))
+	queue := make([]int, len(x.routes))
+	routes := []int{}
 	for _, departure := range departures {
 		if err = ctx.Err(); err != nil {
 			return
 		}
 		out.Stats.Departures++
-		changed := map[string]bool{}
-		for _, s := range accessStops {
-			w := access[s]
+		changed = changed[:0]
+		for _, a := range accessStops {
+			s := a.stop
+			w := paths[a.path]
 			at := departure + w.Duration
 			if at > bq.LatestArrival {
 				continue
@@ -129,37 +145,27 @@ func (x *Index) SearchRange(ctx context.Context, q profilequery.Query, limits pr
 				return
 			}
 			ready[0][s] = rangeLabel{at, departure, w.Append(nil, departure)}
-			changed[s] = true
+			readySet[0][s] = true
+			changed = append(changed, s)
 		}
 		for b := 1; b <= bq.MaxBoardings && len(changed) > 0; b++ {
 			out.Stats.Rounds++
-			queue := map[int]int{}
-			for s := range changed {
-				for _, o := range x.at[s] {
-					p, ok := queue[o.route]
-					if !ok || o.position < p {
-						queue[o.route] = o.position
-					}
-				}
-			}
-			routes := []int{}
-			for r := range queue {
-				routes = append(routes, r)
-			}
-			sort.Ints(routes)
-			nextChanged := map[string]bool{}
+			// Only touched routes reset. Sorting retains the native route scan order.
+			queue, routes = x.collectRoutesInto(changed, queue, routes)
+			nextChanged = nextChanged[:0]
 			for _, r := range routes {
 				out.Stats.Routes++
 				route := x.routes[r]
 				current := -1
 				var parent *paper.Node
 				var start int64
-				for i := queue[r]; i < len(route.trips[0].cs); i++ {
+				for i := queue[r] - 1; i < len(route.trips[0].cs); i++ {
 					if err = ctx.Err(); err != nil {
 						return
 					}
 					prototype := route.trips[0].cs[i]
-					if label, ok := ready[b-1][prototype.From]; ok && prototype.Pickup && x.p.Accessible(bq, prototype.From) {
+					stop := route.from[i]
+					if label := ready[b-1][stop]; readySet[b-1][stop] && prototype.Pickup && x.p.Accessible(bq, prototype.From) {
 						t := sort.Search(len(route.trips), func(j int) bool { return route.trips[j].cs[i].Departure >= label.time })
 						if t < len(route.trips) && (current < 0 || t < current || t == current && label.start > start) && x.p.TripAllowed(bq, route.trips[t].id) {
 							// This exact continuation has already been scanned in b-1;
@@ -196,12 +202,12 @@ func (x *Index) SearchRange(ctx context.Context, q profilequery.Query, limits pr
 						current = -1
 						continue
 					}
-					ws, e := walker.Paths(ctx, c.To)
+					ws, states, e := walks.paths(ctx, c.To, route.to[i])
 					if e != nil {
 						err = e
 						return
 					}
-					for _, w := range ws {
+					for wi, w := range ws {
 						if w.To == bq.Destination {
 							if w.Duration <= bq.Walking.Egress {
 								if err = offer(b, c.Arrival+w.Duration, start, w.Append(parent, c.Arrival)); err != nil {
@@ -213,7 +219,7 @@ func (x *Index) SearchRange(ctx context.Context, q profilequery.Query, limits pr
 						if b == bq.MaxBoardings || w.Duration > bq.Walking.Transfer {
 							continue
 						}
-						at, allowed, e := x.p.ReadyTime(bq, c.To, w.To, c.Arrival, w.Duration)
+						at, allowed, e := walks.readyTime(&states[wi], c.To, w, c.Arrival)
 						if e != nil {
 							err = e
 							return
@@ -221,18 +227,30 @@ func (x *Index) SearchRange(ctx context.Context, q profilequery.Query, limits pr
 						if !allowed || at > bq.LatestArrival {
 							continue
 						}
-						old, ok := ready[b][w.To]
-						if !ok || at < old.time || at == old.time && start > old.start {
+						stop := states[wi].stop
+						if ready[b] == nil {
+							ready[b] = make([]rangeLabel, len(x.atStop))
+							readySet[b] = make([]bool, len(x.atStop))
+						}
+						old := ready[b][stop]
+						if !readySet[b][stop] || at < old.time || at == old.time && start > old.start {
 							if err = spend(); err != nil {
 								return
 							}
-							ready[b][w.To] = rangeLabel{at, start, w.Append(parent, c.Arrival)}
-							nextChanged[w.To] = true
+							ready[b][stop] = rangeLabel{at, start, w.Append(parent, c.Arrival)}
+							readySet[b][stop] = true
+							if !nextSet[stop] {
+								nextSet[stop] = true
+								nextChanged = append(nextChanged, stop)
+							}
 						}
 					}
 				}
 			}
-			changed = nextChanged
+			for _, stop := range nextChanged {
+				nextSet[stop] = false
+			}
+			changed, nextChanged = nextChanged, changed
 		}
 	}
 	return

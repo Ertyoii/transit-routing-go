@@ -198,7 +198,7 @@ func (x *Index) searchWalking(ctx context.Context, q model.Query, filter func(in
 				if boards == q.MaxBoardings || i >= s.end || c.Arrival >= best.Time {
 					continue
 				}
-				for ei, tr := range x.links[s.trip][i] {
+				for ei, packed := range x.links[s.trip][i] {
 					out.Stats.Transfers++
 					if filter != nil && !filter(s.trip, i, ei) {
 						out.Stats.FlagRejected++
@@ -210,6 +210,7 @@ func (x *Index) searchWalking(ctx context.Context, q model.Query, filter func(in
 							return
 						}
 					}
+					tr := x.linkData.unpack(packed)
 					if tr.walk.Duration > q.Walking.Transfer || c.Arrival+tr.walk.Duration > q.LatestArrival || x.trips[tr.trip].cs[tr.board].Arrival > q.LatestArrival {
 						continue
 					}

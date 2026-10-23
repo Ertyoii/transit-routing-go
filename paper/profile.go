@@ -223,16 +223,18 @@ func (p Path) Append(n *Node, start int64) *Node {
 }
 
 type Walker struct {
-	p     *Profile
-	q     model.Query
-	cache map[string][]Path
-	Count int
+	p        *Profile
+	q        model.Query
+	cache    map[string][]Path
+	reach    *graph.ReachSession
+	snapshot string
+	Count    int
 }
 
 func (p *Profile) Walker(q model.Query) *Walker {
 	w := *q.Walking
 	q.Walking = &w
-	return &Walker{p: p, q: q, cache: map[string][]Path{}}
+	return &Walker{p: p, q: q, cache: map[string][]Path{}, reach: p.walkingGraph.NewReachSession(), snapshot: p.walkingGraph.Descriptor().SnapshotID}
 }
 
 type entry struct {
@@ -267,8 +269,8 @@ func (w *Walker) Paths(ctx context.Context, from string) ([]Path, error) {
 	if w.q.Destination != "" {
 		targets = append(targets, walking.Endpoint{NodeID: w.q.Destination})
 	}
-	closure, err := w.p.walkingGraph.ReachWithTargets(ctx, walking.ReachRequest{Targets: targets,
-		SnapshotID: w.p.walkingGraph.Descriptor().SnapshotID, From: walking.Endpoint{NodeID: from},
+	closure, err := w.reach.ReachWithTargets(ctx, walking.ReachRequest{Targets: targets,
+		SnapshotID: w.snapshot, From: walking.Endpoint{NodeID: from},
 		Options: walking.Options{Role: walking.Closure, MaxSeconds: limit, AccessibleOnly: w.q.AccessibleOnly, StopAt: w.q.Destination},
 	}, w.p.walkingTargets)
 	if err != nil {
